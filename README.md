@@ -1,6 +1,6 @@
 # Ortopedik Açı Atlası
 
-**Canlı site:** https://mahmutbiyikli.github.io/ortopedi-aci-atlasi/
+**Canlı site:** https://aciatlasi.github.io/
 
 Grafi üzerinde 31 ortopedik açının doğru ölçüm tekniğini adım adım gösteren, sürüklenebilir noktalı interaktif rehber.
 
