@@ -1,0 +1,939 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ortopedik Açı Atlası</title>
+<meta name="description" content="Ortopedide grafi üzerinden ölçülen 31 açının (Cobb, LCE, HKA, Böhler, hallux valgus ve diğerleri) adım adım, sürüklenebilir noktalarla interaktif ölçüm rehberi.">
+<meta name="theme-color" content="#0a6c8f">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Ortopedik Açı Atlası">
+<meta property="og:description" content="Grafi üzerinde 31 ortopedik açının doğru ölçüm tekniği: adım adım, interaktif.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-512.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Sans+3:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: üç sütunlu çalışma masası — sol bölge listesi, ortada negatoskop (grafi), sağda ölçüm kartı */
+:root{
+  --bg:#eef1f4; --surface:#ffffff; --surface-2:#f5f7fa; --text:#141a22; --muted:#596476; --border:#dbe1e8;
+  --accent:#0a6c8f; --accent-soft:#e1f0f5;
+  --ok:#1b7a4a; --ok-bg:#e3f4ea; --warn:#9a5b00; --warn-bg:#fbefd9; --bad:#b4342a; --bad-bg:#fbe5e2;
+  --lb:#070b10; --lb-2:#121a24;
+  --f-display:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-body:"Source Sans 3",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0c1016; --surface:#141a22; --surface-2:#1a212b; --text:#e6ebf1; --muted:#97a3b4; --border:#262f3b;
+  --accent:#58bfe0; --accent-soft:#16303b;
+  --ok:#55c98c; --ok-bg:#13301f; --warn:#f0b04a; --warn-bg:#33270f; --bad:#ff7a6c; --bad-bg:#3a1a17; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c1016; --surface:#141a22; --surface-2:#1a212b; --text:#e6ebf1; --muted:#97a3b4; --border:#262f3b;
+  --accent:#58bfe0; --accent-soft:#16303b;
+  --ok:#55c98c; --ok-bg:#13301f; --warn:#f0b04a; --warn-bg:#33270f; --bad:#ff7a6c; --bad-bg:#3a1a17; color-scheme:dark}
+
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--text);font-family:var(--f-body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.app{display:grid;grid-template-columns:250px minmax(0,1fr) 360px;gap:16px;max-width:1500px;margin:0 auto;align-items:start}
+header.top{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px}
+header.top h1{font-family:var(--f-display);font-weight:700;font-size:22px;letter-spacing:-.01em;margin:0}
+header.top p{margin:0;color:var(--muted);font-size:14px}
+
+/* Sidebar */
+nav.side{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto}
+.search{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:7px;background:var(--surface-2);color:var(--text);font:inherit;font-size:14px}
+.grp{margin-top:12px}
+.grp h3{font-family:var(--f-display);font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:0 0 4px 6px;font-weight:600}
+.grp button{display:flex;justify-content:space-between;gap:8px;width:100%;text-align:left;border:0;background:none;padding:6px 8px;border-radius:6px;cursor:pointer;font-size:14px}
+.grp button:hover{background:var(--surface-2)}
+.grp button[aria-current="true"]{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.grp button small{color:var(--muted);font-family:var(--f-mono);font-size:11px;white-space:nowrap}
+.grp button[aria-current="true"] small{color:var(--accent)}
+
+/* Viewer */
+.viewer{display:flex;flex-direction:column;gap:10px;min-width:0}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:none;padding:7px 12px;cursor:pointer;font-size:14px}
+.seg button[aria-pressed="true"]{background:var(--text);color:var(--surface)}
+.btn{border:1px solid var(--border);background:var(--surface);padding:7px 12px;border-radius:8px;cursor:pointer;font-size:14px}
+.btn:hover{border-color:var(--accent)}
+.btn:disabled{opacity:.4;cursor:default}
+.stepnav{display:inline-flex;gap:6px;align-items:center}
+.stepnav span{font-family:var(--f-mono);font-size:12px;color:var(--muted);min-width:46px;text-align:center}
+.spacer{flex:1}
+.lightbox{position:relative;border-radius:10px;overflow:hidden;background:radial-gradient(120% 90% at 50% 40%,var(--lb-2),var(--lb) 70%);border:1px solid #000;box-shadow:inset 0 0 60px rgba(0,0,0,.6)}
+.lightbox .tag{position:absolute;left:12px;top:10px;font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;color:#9fb3c8;text-transform:uppercase;pointer-events:none}
+.lightbox .tag.r{left:auto;right:12px}
+.lightbox .hint{position:absolute;left:12px;bottom:10px;font-size:12px;color:#8ea2b8;pointer-events:none}
+svg#xr{display:block;width:100%;height:auto;max-height:calc(100vh - 150px);touch-action:none;user-select:none}
+
+/* X-ray rendering */
+.b{fill:rgba(214,226,240,.22);stroke:rgba(236,243,252,.78);stroke-width:1.5;stroke-linejoin:round}
+.b2{fill:rgba(214,226,240,.12);stroke:rgba(236,243,252,.4);stroke-width:1.2}
+.hole{fill:rgba(7,11,16,.55);stroke:rgba(236,243,252,.35);stroke-width:1}
+.tear{fill:none;stroke:rgba(236,243,252,.7);stroke-width:1.4}
+.vlbl{font-family:var(--f-mono);font-size:9.5px;fill:rgba(207,224,240,.7)}
+.soft{fill:none;stroke:rgba(236,243,252,.35);stroke-width:1.2;stroke-dasharray:3 3}
+.ground{stroke:rgba(236,243,252,.25);stroke-width:2}
+
+.ln{stroke-width:2;fill:none;stroke-linecap:round;transition:opacity .2s}
+.ln.a{stroke:#38d0ff}
+.ln.b{stroke:#ff6fd8}
+.ln.r{stroke:rgba(255,255,255,.65);stroke-dasharray:6 5;stroke-width:1.4}
+.ln.x{stroke:#9be7ff;stroke-dasharray:4 4;stroke-width:1.4;opacity:.85}
+.circ{fill:none;stroke:#9be7ff;stroke-dasharray:4 4;stroke-width:1.3}
+.arc{fill:none;stroke:#ffd447;stroke-width:2.4}
+.wedge{fill:rgba(255,212,71,.16)}
+.albl{font-family:var(--f-mono);font-size:13px;font-weight:600;fill:#ffd447;paint-order:stroke;stroke:#05080c;stroke-width:4px;stroke-linejoin:round}
+.note{font-family:var(--f-body);font-size:11.5px;fill:#cfe0f0;paint-order:stroke;stroke:#05080c;stroke-width:3.5px}
+.cur.ln,.cur.arc,.cur.circ{filter:drop-shadow(0 0 4px currentColor)}
+.cur.ln.a{color:#38d0ff}.cur.ln.b{color:#ff6fd8}.cur.arc{color:#ffd447}
+.pt{cursor:grab}
+.pt:active{cursor:grabbing}
+.pt .hit{fill:transparent}
+.pt .dot{fill:#ffd447;stroke:#05080c;stroke-width:1.6}
+.pt .lbl{font-family:var(--f-mono);font-size:10.5px;font-weight:600;fill:#fff3c4;paint-order:stroke;stroke:#05080c;stroke-width:3px}
+.pt.cur .ring{fill:none;stroke:#ffd447;stroke-width:1.5;animation:pulse 1.4s ease-out infinite}
+.pt.drag .dot{fill:#fff}
+@keyframes pulse{from{r:6;opacity:1}to{r:16;opacity:0}}
+@media (prefers-reduced-motion:reduce){.pt.cur .ring{animation:none;r:10}}
+
+/* Panel */
+aside.panel{display:flex;flex-direction:column;gap:12px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.eyebrow{font-family:var(--f-display);font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:600}
+.card h2{font-family:var(--f-display);font-size:21px;line-height:1.2;margin:2px 0 6px;text-wrap:balance}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12px;padding:2px 8px;border-radius:99px;background:var(--surface-2);border:1px solid var(--border);color:var(--muted)}
+.vals{display:grid;gap:8px;margin-top:12px}
+.val{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:8px 10px;border-radius:8px;background:var(--surface-2)}
+.val .k{font-size:14px;color:var(--muted)}
+.val .v{font-family:var(--f-mono);font-size:24px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.val .v small{font-size:13px;color:var(--muted);font-weight:500;margin-left:4px}
+.status{display:flex;gap:8px;align-items:flex-start;margin-top:8px;padding:8px 10px;border-radius:8px;font-size:14px;line-height:1.35}
+.status b{font-family:var(--f-display);font-size:12px;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:5px;white-space:nowrap}
+.status.ok{background:var(--ok-bg)} .status.ok b{background:var(--ok);color:var(--surface)}
+.status.warn{background:var(--warn-bg)} .status.warn b{background:var(--warn);color:var(--surface)}
+.status.bad{background:var(--bad-bg)} .status.bad b{background:var(--bad);color:var(--surface)}
+.card h4{font-family:var(--f-display);font-size:13px;margin:0 0 8px;letter-spacing:.01em}
+ol.steps{list-style:none;margin:0;padding:0;display:grid;gap:4px;counter-reset:s}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:24px 1fr;gap:8px;padding:7px 8px;border-radius:7px;cursor:pointer;font-size:14px;line-height:1.4}
+ol.steps li::before{content:counter(s);font-family:var(--f-mono);font-size:12px;font-weight:600;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--surface-2);border:1px solid var(--border);color:var(--muted)}
+ol.steps li:hover{background:var(--surface-2)}
+ol.steps li.on{background:var(--accent-soft)}
+ol.steps li.on::before{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+ol.steps li.past::before{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;color:var(--muted);margin-top:10px}
+.legend i{display:inline-block;width:18px;height:0;border-top:2px solid;vertical-align:middle;margin-right:5px}
+.norm{font-size:14px;margin:0}
+.norm td{padding:3px 0;vertical-align:top}
+.norm td:first-child{font-family:var(--f-mono);font-size:13px;padding-right:12px;white-space:nowrap;color:var(--text)}
+.norm td:last-child{color:var(--muted)}
+ul.pit{margin:0;padding-left:18px;font-size:14px;display:grid;gap:5px}
+.clin{font-size:14px;margin:0;color:var(--text)}
+.rules{font-size:13px;color:var(--muted);margin:0;padding-left:18px;display:grid;gap:3px}
+
+@media (max-width:1180px){
+  .app{grid-template-columns:220px minmax(0,1fr)}
+  aside.panel{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));align-items:start}
+}
+@media (max-width:760px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  nav.side{position:static;max-height:none}
+  .grpwrap{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+  .grp{margin-top:8px}
+  aside.panel{display:flex}
+  svg#xr{max-height:none}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <h1>Ortopedik Açı Atlası</h1>
+    <p>Grafi üzerinde <span id="cnt">31</span> ölçümün doğru tekniği. Sarı işaret noktalarını sürükleyin; açı anında yeniden hesaplanır.</p>
+  </header>
+
+  <nav class="side" aria-label="Ölçümler">
+    <input id="q" class="search" type="search" placeholder="Ölçüm ara (ör. Cobb, Böhler)" autocomplete="off">
+    <div id="list" class="grpwrap"></div>
+  </nav>
+
+  <section class="viewer">
+    <div class="toolbar">
+      <div class="seg" role="group" aria-label="Görünüm">
+        <button id="mStep" aria-pressed="false">Adım adım</button>
+        <button id="mAll" aria-pressed="true">Tüm ölçüm</button>
+      </div>
+      <div class="stepnav">
+        <button class="btn" id="prev" aria-label="Önceki adım">◀</button>
+        <span id="stepLbl">–</span>
+        <button class="btn" id="next" aria-label="Sonraki adım">▶</button>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn" id="lblTog" aria-pressed="true">Etiketler</button>
+      <button class="btn" id="reset">Noktaları sıfırla</button>
+    </div>
+    <div class="lightbox">
+      <span class="tag" id="viewTag"></span>
+      <span class="tag r" id="sideTag"></span>
+      <svg id="xr" viewBox="0 0 400 480" role="img" aria-label="Şematik grafi ve ölçüm çizgileri">
+        <g id="bones"></g>
+        <g id="ov"></g>
+      </svg>
+      <span class="hint">Noktaları sürükleyerek hatalı yerleşimin açıyı nasıl değiştirdiğini görün</span>
+    </div>
+  </section>
+
+  <aside class="panel">
+    <div class="card">
+      <div class="eyebrow" id="region"></div>
+      <h2 id="name"></h2>
+      <div class="chips" id="chips"></div>
+      <div class="vals" id="vals"></div>
+      <div id="status"></div>
+    </div>
+    <div class="card">
+      <h4>Ölçüm adımları</h4>
+      <ol class="steps" id="steps"></ol>
+      <div class="legend">
+        <span><i style="border-color:#38d0ff"></i>1. çizgi</span>
+        <span><i style="border-color:#ff6fd8"></i>2. çizgi</span>
+        <span><i style="border-color:#8c9aab;border-top-style:dashed"></i>referans</span>
+        <span><i style="border-color:#e0b52f"></i>ölçülen açı</span>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Normal değerler</h4>
+      <table class="norm"><tbody id="norm"></tbody></table>
+    </div>
+    <div class="card">
+      <h4>Klinik önemi</h4>
+      <p class="clin" id="clin"></p>
+    </div>
+    <div class="card">
+      <h4>Sık yapılan hatalar</h4>
+      <ul class="pit" id="pit"></ul>
+    </div>
+    <div class="card">
+      <h4>Her ölçümde geçerli kurallar</h4>
+      <ul class="rules">
+        <li>Doğru projeksiyon: rotasyonsuz, standart pozisyon (ör. ayakta yük verdirerek, patella önde).</li>
+        <li>Eksen çizgisi için diafizde iki seviyeden orta nokta alın; tek kortekse göre çizmeyin.</li>
+        <li>Seri takipte aynı referans noktalarını ve aynı tekniği kullanın.</li>
+        <li>Mesafe ölçümlerinde (mm) kalibrasyon işaretleyicisi şarttır; açılar büyütmeden etkilenmez.</li>
+        <li>Gözlemciler arası fark genelde 3–5°'dir; bundan küçük değişimi gerçek değişim saymayın.</li>
+      </ul>
+    </div>
+  </aside>
+</div>
+
+<script>
+(()=>{
+const W=400,H=480;
+/* ---------- vektör yardımcıları ---------- */
+const sub=(a,b)=>[a[0]-b[0],a[1]-b[1]], add=(a,b)=>[a[0]+b[0],a[1]+b[1]], mul=(a,k)=>[a[0]*k,a[1]*k];
+const len=a=>Math.hypot(a[0],a[1]), norm=a=>{const l=len(a)||1;return [a[0]/l,a[1]/l]};
+const dot=(a,b)=>a[0]*b[0]+a[1]*b[1], cross=(a,b)=>a[0]*b[1]-a[1]*b[0];
+const mid=(a,b)=>[(a[0]+b[0])/2,(a[1]+b[1])/2], perp=a=>[-a[1],a[0]];
+const deg=r=>r*180/Math.PI, rad=d=>d*Math.PI/180;
+const angB=(u,v)=>deg(Math.acos(Math.max(-1,Math.min(1,dot(norm(u),norm(v))))));
+const acute=(u,v)=>{const a=angB(u,v);return a>90?180-a:a};
+function inter(p,d,q,e){const den=cross(d,e);if(Math.abs(den)<1e-6)return null;const t=cross(sub(q,p),e)/den;return add(p,mul(d,t))}
+const inView=(p,m=0)=>!!p&&p[0]>=-m&&p[0]<=W+m&&p[1]>=-m&&p[1]<=H+m;
+const P2=p=>p[0].toFixed(1)+','+p[1].toFixed(1);
+const f1=n=>(Math.round(n*10)/10).toFixed(1);
+
+/* ---------- eleman üreticisi ---------- */
+function G(){const g=[];return{g,
+  L:(a,b,c,s)=>g.push({t:'L',a,b,c,s}),
+  X:(a,b,c,s,e=50)=>{const d=norm(sub(b,a));g.push({t:'L',a:sub(a,mul(d,e)),b:add(b,mul(d,e)),c,s})},
+  A:(c,d1,d2,s,txt,r=34)=>g.push({t:'A',c,d1,d2,s,txt,r}),
+  C:(c,r,s)=>g.push({t:'C',c,r,s}),
+  T:(p,txt,s)=>g.push({t:'T',p,txt,s})}}
+
+/* Cobb tipi iki son plak çizgisi arasındaki açının çizimi */
+function cobbDraw(o,a1,a2,b1,b2,ang,s){
+  const da=sub(a2,a1),db=sub(b2,b1),ma=mid(a1,a2),mb=mid(b1,b2);
+  o.X(a1,a2,'a',s[0],70);o.X(b1,b2,'b',s[1],70);
+  const X=inter(ma,perp(da),mb,perp(db));
+  if(X&&inView(X,-12)){o.L(ma,X,'x',s[2]);o.L(mb,X,'x',s[2]);o.A(X,sub(ma,X),sub(mb,X),s[2],f1(ang)+'°',40);return}
+  const Y=inter(ma,da,mb,db);
+  if(Y&&inView(Y,-12)){o.L(ma,Y,'x',s[2]);o.L(mb,Y,'x',s[2]);o.A(Y,sub(ma,Y),sub(mb,Y),s[2],f1(ang)+'°',40);return}
+  // kesişim görüntü dışında: ikinci çizgiyi birinci son plağın ortasına paralel taşı
+  const nb=norm(db);o.L(sub(ma,mul(nb,70)),add(ma,mul(nb,70)),'x',s[2]);o.A(ma,da,db,s[2],f1(ang)+'°',50);
+  o.T(add(ma,[-60,-44]),'2. çizgiye paralel',s[2]);
+}
+
+/* ---------- kemik çizim yardımcıları ---------- */
+function bone(p,q,wb,ws,wh,cls='b'){
+  const d=norm(sub(q,p)),n=perp(d),Lg=len(sub(q,p)),N=22,lf=[],rt=[];
+  for(let i=0;i<=N;i++){const t=i/N;
+    const w=(ws+(wb-ws)*Math.max(0,1-t/0.22)**2+(wh-ws)*Math.max(0,(t-0.78)/0.22)**2)/2;
+    const c=add(p,mul(d,t*Lg));lf.push(add(c,mul(n,w)));rt.push(sub(c,mul(n,w)))}
+  const rh=wh/2,rb=wb/2;
+  return `<path class="${cls}" d="M${lf.map(P2).join('L')} A${rh} ${rh} 0 0 0 ${P2(rt[N])} L${rt.slice().reverse().map(P2).join('L')} A${rb} ${rb} 0 0 0 ${P2(lf[0])} Z"/>`;
+}
+function stack(base,thetas,hs){const S=[{m:base,t:thetas[0]}];
+  for(let k=1;k<thetas.length;k++){const ta=rad((thetas[k-1]+thetas[k])/2),p=S[k-1].m;
+    S.push({m:[p[0]+hs[k-1]*Math.sin(ta),p[1]-hs[k-1]*Math.cos(ta)],t:thetas[k]})}return S}
+const edge=(s,w)=>{const t=rad(s.t),d=[Math.cos(t),Math.sin(t)];return [sub(s.m,mul(d,w/2)),add(s.m,mul(d,w/2))]};
+const poly=(pts,cls='b')=>`<path class="${cls}" d="M${pts.map(P2).join('L')}Z"/>`;
+
+/* ----- koronal skolyoz omurgası ----- */
+const COR=(()=>{const n=12,T=[],hs=[];
+  for(let k=0;k<2*n;k++){T.push(26*Math.cos(Math.PI*(k/(2*n-1)*1.8-0.4)));if(k<2*n-1)hs.push(k%2===0?24:7)}
+  const S=stack([250,452],T,hs);let svg='';
+  for(let i=0;i<n;i++){const b=edge(S[2*i],56),t=edge(S[2*i+1],56);
+    svg+=`<path class="b" d="M${P2(b[0])}L${P2(b[1])}L${P2(t[1])}L${P2(t[0])}Z"/>`;
+    const c=mid(mid(b[0],b[1]),mid(t[0],t[1])),d=norm(sub(t[1],t[0])),r=-deg(Math.atan2(d[1],d[0]));
+    for(const s of[-15,15]){const pc=add(c,mul(d,s));svg+=`<ellipse class="b2" cx="${pc[0].toFixed(1)}" cy="${pc[1].toFixed(1)}" rx="5" ry="7" transform="rotate(${(-r).toFixed(1)} ${P2(pc)})"/>`}
+    svg+=`<ellipse class="b2" cx="${c[0].toFixed(1)}" cy="${(c[1]+3).toFixed(1)}" rx="3.5" ry="6"/>`;
+    // kostalar (torakal görünüm)
+    if(i>2){const l=t[0],rr=t[1];svg+=`<path class="soft" d="M${P2(l)} C${l[0]-40},${l[1]-6} ${l[0]-80},${l[1]+20} ${l[0]-110},${l[1]+60}"/><path class="soft" d="M${P2(rr)} C${rr[0]+40},${rr[1]-6} ${rr[0]+70},${rr[1]+20} ${rr[0]+95},${rr[1]+60}"/>`}}
+  let kL=0,kU=1;for(let k=0;k<2*n;k+=2)if(S[k].t>S[kL].t)kL=k;for(let k=1;k<2*n;k+=2)if(S[k].t<S[kU].t)kU=k;
+  const u=edge(S[kU],56),l=edge(S[kL],56);return{svg,U1:u[0],U2:u[1],L1:l[0],L2:l[1]}})();
+
+/* ----- sagittal lomber omurga + pelvis ----- */
+const SAG=(()=>{const A=[100,300],B=[160,345],M=mid(A,B),th0=deg(Math.atan2(B[1]-A[1],B[0]-A[0]));
+  const T=[],hs=[];const nS=13;for(let k=0;k<nS;k++){T.push(k<=10?th0-(th0+15)*k/10:-15-5*(k-10));if(k<nS-1)hs.push(k%2===0?9:30)}
+  const S=stack(M,T,hs);let svg='';
+  for(let j=0;j<6;j++){const kb=2*j+1,kt=2*j+2;if(kt>=S.length)break;const b=edge(S[kb],50),t=edge(S[kt],50);
+    svg+=`<path class="b" d="M${P2(b[0])}L${P2(b[1])}L${P2(t[1])}L${P2(t[0])}Z"/>`;
+    const back=mul(norm(sub(t[0],t[1])),1),mm=mid(b[0],t[0]);
+    svg+=poly([t[0],add(t[0],mul(back,14)),add(mm,mul(back,46)),add(b[0],mul(back,14)),b[0]],'b2')}
+  const L1=edge(S[10],50);
+  svg=`<path class="b" d="M70,330 C80,280 150,255 215,270 C240,278 250,300 238,318 C228,330 222,350 214,380 C206,398 194,408 181.2,412.8 A30,30 0 0 0 130.5,428.8 C130,448 140,465 150,478 L120,478 C112,455 112,430 112,410 C104,385 85,360 70,330 Z"/>`+
+    `<path class="b" d="M100,300 L160,345 C158,380 148,415 128,440 C120,452 108,456 102,448 C92,420 82,380 80,345 C80,330 88,312 100,300 Z"/>`+svg+
+    `<path class="b" d="M168,452 L238,480 L195,480 L150,458 Z"/><circle class="b" cx="160" cy="434" r="24"/>`;
+  return{svg,A,B,H:[160,434],L1a:L1[0],L1b:L1[1]}})();
+
+/* ----- sagittal torakal omurga (kifoz) ----- */
+const KYP=(()=>{const n=10,T=[],hs=[],names=['T12','T11','T10','T9','T8','T7','T6','T5','T4','T3'];
+  for(let k=0;k<2*n;k++){T.push(-18+40*k/17);if(k<2*n-1)hs.push(k%2===0?26:6)}
+  const S=stack([250,458],T,hs);let svg='';
+  for(let j=0;j<n;j++){const b=edge(S[2*j],46),t=edge(S[2*j+1],46);
+    svg+=`<path class="b" d="M${P2(b[0])}L${P2(b[1])}L${P2(t[1])}L${P2(t[0])}Z"/>`;
+    const back=norm(sub(t[0],t[1])),mm=mid(b[0],t[0]);
+    svg+=poly([t[0],add(t[0],mul(back,12)),add(add(mm,mul(back,44)),[0,12]),add(b[0],mul(back,12)),b[0]],'b2');
+    svg+=`<path class="soft" d="M${P2(add(mm,mul(back,8)))} C${mm[0]-30},${mm[1]+4} ${mm[0]-60},${mm[1]+30} ${mm[0]-70},${mm[1]+60}"/>`;
+    const lb=add(mid(b[1],t[1]),[8,4]);svg+=`<text class="vlbl" x="${lb[0].toFixed(1)}" y="${lb[1].toFixed(1)}">${names[j]}</text>`}
+  const a=edge(S[17],46),c=edge(S[0],46);return{svg,T4a:a[0],T4b:a[1],T12a:c[0],T12b:c[1]}})();
+
+/* ----- AP pelvis ----- */
+function pelvisAP(ped){
+  const fem=ped
+    ?`<g transform="translate(4,14)"><path class="b" d="M100,282 C85,290 70,295 55,300 C42,305 40,330 46,350 L50,480 L92,480 L92,400 C92,388 100,382 104,376 C104,368 98,362 96,355 C100,340 115,330 125,322 Z"/></g><ellipse class="b" cx="112" cy="300" rx="21" ry="14"/><path class="hole" d="M140,288 L152,298 L146,306 Z"/>`
+    :`<path class="b" d="M100,282 C85,290 70,295 55,300 C42,305 40,330 46,350 L50,480 L92,480 L92,400 C92,388 100,382 104,376 C104,368 98,362 96,355 C100,340 115,330 125,322 Z"/><circle class="b" cx="110" cy="300" r="32"/>`;
+  const half=`<path class="b" d="M170,150 C150,100 90,60 45,85 C25,100 28,150 50,190 C62,215 72,240 91,269 A36,36 0 0 1 146,296 C152,260 165,215 175,180 Z"/>
+  <path class="b" d="M146,296 C150,315 170,330 196,338 L196,382 C170,388 140,402 118,398 C96,392 92,355 112,330 C122,318 135,305 146,296 Z"/>
+  <ellipse class="hole" cx="150" cy="360" rx="20" ry="15"/>${fem}
+  ${ped?'':'<path class="tear" d="M144,292 C140,306 145,316 152,316 C159,316 161,306 157,292"/>'}`;
+  return `<rect class="b" x="166" y="92" width="68" height="44" rx="8"/>
+  <path class="b" d="M168,146 L232,146 L224,250 C216,275 206,290 200,296 C194,290 184,275 176,250 Z"/>
+  ${half}<g transform="matrix(-1 0 0 1 400 0)">${half}</g>`;
+}
+/* ----- proksimal femur AP ----- */
+const FEMUR=`<path class="b" d="M40,30 L200,10 L190,60 C182,70 175,80 168.1,88 A44,44 0 0 0 91.9,88 C80,82 60,78 40,80 Z"/>
+<path class="b" d="M155,88 C190,105 230,110 255,105 L268,92 C285,100 285,140 270,175 C262,200 256,220 256,250 L256,480 L204,480 L204,260 C204,245 198,238 190,232 C200,222 205,215 200,200 C190,180 170,160 150,140 Z"/>
+<circle class="b" cx="130" cy="110" r="38"/>`;
+const CAM=`<path class="b" d="M160,92 C176,88 192,96 204,110 L194,120 C184,110 172,103 158,100 Z"/>`;
+
+/* ----- ayakta tüm alt ekstremite (sağ, AP) ----- */
+const LEG=`<path class="b" d="M120,0 L240,0 L236,22 C226,28 214,30 206.4,29.6 A26,26 0 0 0 168.1,31.3 C150,30 135,22 120,18 Z"/>
+<path class="b" d="M175,40 C165,48 155,52 146,52 C138,56 138,72 150,90 C158,120 170,170 176,205 C170,215 158,222 158,236 C158,244 170,248 180,247 C188,246 194,242 200,242 C206,242 212,246 222,247 C234,248 244,244 242,232 C240,220 230,212 214,200 C210,170 200,125 196,100 C192,88 186,78 190,70 C196,64 200,58 200,52 Z"/>
+<circle class="b" cx="188" cy="48" r="22"/>
+<path class="b" d="M158,256 C175,252 190,250 200,254 C210,250 228,252 242,256 L240,272 C232,286 222,296 218,312 L228,440 C236,446 240,452 238,464 C232,468 224,464 220,460 C210,458 202,458 194,460 L194,442 L186,312 C180,296 168,286 160,272 Z"/>
+<path class="b2" d="M166,266 C158,262 154,272 160,282 L176,440 C172,452 174,468 182,472 C190,468 190,452 184,440 L170,282 Z"/>
+<path class="b2" d="M192,463 C200,470 222,472 232,466 L232,480 L192,480 Z"/>`;
+
+/* ----- diz lateral ----- */
+const KNEE_LAT=`<path class="b" d="M160,0 L160,180 C155,210 140,230 140,252 C140,282 165,298 190,298 C220,298 236,280 236,255 C236,238 228,222 222,205 L222,0 Z"/>
+<ellipse class="b" cx="262" cy="215" rx="16" ry="36" transform="rotate(10 262 215)"/>
+<path class="soft" d="M268,250 L254,346"/>
+<path class="b" d="M138,302 C160,300 200,293 238,288 C248,290 252,300 248,312 C246,325 252,335 254,350 C254,365 240,380 232,400 L226,480 L172,480 L168,400 C160,370 148,345 140,330 C132,320 132,308 138,302 Z"/>
+<ellipse class="b2" cx="140" cy="345" rx="14" ry="18"/><path class="b2" d="M134,360 L140,480 L152,480 L148,360 Z"/>`;
+
+/* ----- ön ayak AP ----- */
+const FOOT_AP=(()=>{let s='';
+  s+=bone([152,412],[118,208],34,20,30)+bone([122,196],[150,124],24,16,20)+bone([152,116],[166,74],20,14,16);
+  s+=`<ellipse class="b2" cx="112" cy="222" rx="8" ry="10"/><ellipse class="b2" cx="132" cy="226" rx="8" ry="10"/>`;
+  s+=bone([188,402],[195,192],24,13,20)+bone([196,180],[204,135],16,10,14)+bone([205,128],[208,104],12,9,11)+bone([209,98],[210,82],10,8,9);
+  s+=bone([216,404],[228,204],22,12,19)+bone([229,192],[238,150],15,9,13)+bone([239,143],[242,122],11,8,10)+bone([243,116],[244,102],9,7,8);
+  s+=bone([243,410],[260,220],22,12,18)+bone([262,208],[272,170],14,9,12)+bone([273,163],[276,145],10,8,9)+bone([277,139],[278,126],9,7,8);
+  s+=bone([272,420],[300,242],30,12,18)+bone([302,230],[314,198],14,9,12)+bone([315,191],[318,176],10,8,9)+bone([319,170],[320,158],9,7,8);
+  s+=`<rect class="b" x="128" y="420" width="44" height="54" rx="8"/><rect class="b" x="176" y="414" width="28" height="40" rx="6"/><rect class="b" x="206" y="416" width="28" height="44" rx="6"/><rect class="b" x="238" y="424" width="54" height="52" rx="8"/>`;
+  return s})();
+
+/* ----- kalkaneus lateral (Böhler / Gissane) ----- */
+const CALC=`<path class="b" d="M170,0 L175,175 C195,170 235,172 255,180 L262,0 Z"/>
+<path class="b2" d="M150,0 L160,0 L170,215 C165,225 150,220 148,210 Z"/>
+<path class="b" d="M160,246 C158,205 205,180 245,195 C270,205 300,210 325,222 C340,232 335,252 318,255 C300,256 285,247 268,243 C250,240 240,250 232,256 C222,245 210,236 200,238 C185,240 170,246 160,246 Z"/>
+<ellipse class="b" cx="346" cy="242" rx="13" ry="24"/>
+<path class="b2" d="M324,266 L372,270 L376,312 L318,318 Z"/>
+<path class="b" d="M70,300 C76,280 86,266 98,262 C130,262 160,255 185,242 C192,236 200,232 207,233 C218,238 226,256 232,264 C245,260 268,252 288,252 C305,253 318,262 322,275 C324,295 318,315 305,322 C260,330 200,340 150,352 C115,362 85,368 70,360 C55,350 52,320 70,300 Z"/>`;
+
+/* ----- ayak lateral (Meary / kalkaneal pitch) ----- */
+const FOOT_LAT=`<path class="b" d="M140,0 L148,252 C165,246 185,248 200,256 L206,0 Z"/>
+<path class="b2" d="M120,0 L132,0 L138,262 C132,270 122,262 124,250 Z"/>
+<path class="b2" d="M190,322 L222,330 L218,352 L188,345 Z"/>${bone([222,345],[330,372],16,9,14,'b2')}
+<path class="b" d="M60,330 C62,305 80,295 100,295 C130,293 150,290 170,295 C180,300 188,310 192,318 C192,328 188,334 180,338 C145,350 105,368 78,375 C62,374 58,350 60,330 Z"/>
+<path class="b" d="M100,295 C98,265 130,248 160,252 C180,255 195,270 210,285 C222,295 222,312 208,318 C196,322 186,312 175,300 C160,296 130,300 100,295 Z"/>
+<ellipse class="b" cx="226" cy="308" rx="10" ry="18" transform="rotate(-20 226 308)"/>
+<path class="b" d="M236,296 L258,308 L256,336 L234,326 Z"/>
+${bone([258,322],[338,354],22,13,20)}${bone([346,357],[374,366],14,9,12)}${bone([378,367],[396,370],11,8,9)}
+<circle class="b2" cx="334" cy="367" r="6"/><line class="ground" x1="20" y1="381" x2="392" y2="381"/>`;
+
+/* ----- dirsek AP ----- */
+const ELBOW=`<path class="b" d="M190,0 L190,180 C188,205 165,222 142,238 C132,245 134,258 148,262 C156,268 158,282 165,292 C175,300 190,300 200,292 C208,302 222,306 235,300 C248,300 258,292 262,280 C270,266 282,262 292,252 C298,244 292,234 280,230 C255,215 232,195 230,180 L230,0 Z"/>
+<ellipse class="hole" cx="214" cy="250" rx="16" ry="12"/>
+<path class="soft" d="M146,258 L204,276"/>
+<path class="b" d="M160,300 L206,300 L204,316 L192,320 L190,340 C190,352 194,362 190,372 L166,470 L140,470 L168,372 C170,355 172,345 174,338 L172,320 L162,316 Z"/>
+<path class="b" d="M210,300 C222,312 248,312 262,298 L264,318 C258,330 250,340 246,350 L220,470 L196,470 L222,350 C220,330 214,315 210,300 Z"/>`;
+
+/* ----- el bileği PA ----- */
+const WRIST_AP=`<path class="b" d="M152,480 L152,360 C145,300 115,250 108,195 C106,186 114,182 120,190 C145,203 180,218 210,229 L216,232 C216,262 208,300 206,360 L206,480 Z"/>
+<path class="b" d="M222,480 L222,330 C222,300 222,275 230,258 C238,246 258,244 264,256 C268,262 266,270 262,280 C256,300 252,320 252,340 L252,480 Z"/>
+<path class="b" d="M258,250 L270,226 L276,232 L266,254 Z"/>
+<ellipse class="b" cx="140" cy="164" rx="30" ry="16" transform="rotate(-40 140 164)"/>
+<ellipse class="b" cx="190" cy="190" rx="22" ry="18"/><ellipse class="b" cx="236" cy="192" rx="17" ry="15"/><circle class="b2" cx="250" cy="178" r="9"/>
+<ellipse class="b" cx="110" cy="120" rx="18" ry="16"/><ellipse class="b" cx="146" cy="118" rx="15" ry="15"/><ellipse class="b" cx="186" cy="132" rx="19" ry="32"/><ellipse class="b" cx="228" cy="138" rx="20" ry="26"/>
+${bone([108,100],[80,26],18,11,16)}${bone([148,98],[140,0],18,11,16)}${bone([186,98],[186,0],18,11,16)}${bone([224,108],[232,4],16,10,15)}${bone([252,116],[274,20],16,10,15)}`;
+
+/* ----- el bileği lateral ----- */
+const WRIST_LAT=`<path class="b2" d="M184,480 L186,262 C186,242 200,236 214,242 L216,262 L214,480 Z"/>
+<path class="b" d="M176,480 L176,300 C174,262 166,232 168,205 C180,214 195,220 210,220 C220,220 228,218 234,217 C238,240 230,280 226,300 L226,480 Z"/>
+<path class="b" d="M172,204 C180,222 222,224 232,212 C234,196 226,180 214,178 C206,186 196,188 186,182 C176,184 170,194 172,204 Z"/>
+<path class="b" d="M190,180 C188,160 196,150 200,120 C200,100 196,85 200,70 L228,70 C232,90 226,110 224,130 C222,150 226,170 214,180 C205,186 195,186 190,180 Z"/>
+<ellipse class="b2" cx="236" cy="165" rx="13" ry="34" transform="rotate(45 236 165)"/>
+${bone([214,66],[206,0],22,13,18)}`;
+
+/* ----- omuz AP ----- */
+const SHOULDER=`<path class="b" d="M60,120 L176,150 C186,156 192,164 196,172 C192,200 188,240 184,270 C180,285 170,295 160,300 L90,470 L40,470 C45,350 50,220 60,120 Z"/>
+<path class="b" d="M178,152 C196,132 226,124 248,138 C246,150 228,150 204,162 Z"/>
+<path class="b" d="M0,72 C100,66 200,84 268,98 C284,101 290,108 280,113 C200,106 100,94 0,96 Z"/>
+<path class="b" d="M206,250 C220,285 226,320 226,360 L226,480 L274,480 L274,360 C276,320 300,292 310,250 Z"/>
+<circle class="b" cx="252" cy="222" r="58"/>
+<path class="b" d="M30,96 C120,100 220,104 282,112 C296,114 306,118 306,126 C304,134 290,136 276,134 C220,130 140,126 40,128 Z"/>`;
+
+/* ---------- ölçüm tanımları ---------- */
+const lvl=(l,t)=>({l,t});
+const M=[
+/* ===== OMURGA ===== */
+{id:'cobb',reg:'Omurga',name:'Cobb açısı',short:'skolyoz',view:'Ayakta PA tüm omurga',side:'koronal',bones:COR.svg,
+ pts:{U1:COR.U1,U2:COR.U2,L1:COR.L1,L2:COR.L2},
+ steps:[{t:'Üst uç vertebrayı bulun: eğrinin üst ucunda horizontale göre <b>en fazla eğimli</b> vertebra. Üst son plağının iki köşesini işaretleyin.',p:['U1','U2']},
+  {t:'Alt uç vertebrayı bulun: eğrinin alt ucunda en fazla eğimli vertebra. <b>Alt son plağının</b> iki köşesini işaretleyin.',p:['L1','L2']},
+  {t:'İki son plak çizgisinin kesiştiği açıyı ölçün (çok uzaksa son plaklara çizilen diklerin kesişim açısı aynıdır).',p:[]}],
+ calc(P){const o=G(),a=angB(sub(P.U2,P.U1),sub(P.L2,P.L1));cobbDraw(o,P.U1,P.U2,P.L1,P.L2,a,[0,1,2]);return{g:o.g,out:[{k:'Cobb açısı',v:a}],main:a}},
+ judge(v){return v<10?lvl('ok','<10°: skolyoz tanımı karşılanmıyor (asimetri)'):v<25?lvl('warn','10–25°: hafif skolyoz, büyüme döneminde izlem'):v<45?lvl('warn','25–45°: orta, büyüme potansiyeli varsa korse'):lvl('bad','>45–50°: ağır, cerrahi açısından değerlendirilmeli')},
+ norm:[['<10°','Skolyoz yok'],['10–25°','Hafif'],['25–45°','Orta (korse endikasyonu)'],['>45–50°','Ağır (cerrahi düşünülür)']],
+ clin:'Skolyoz tanısı, sınıflaması ve progresyon takibinin temel ölçümüdür. Tedavi kararları (izlem, korse, cerrahi) doğrudan Cobb değerine ve iskelet maturitesine (Risser) göre verilir.',
+ pit:['Uç vertebrayı her kontrolde değiştirmek: seri grafilerde ilk ölçümdeki vertebralar kullanılmalı.','Son plak net değilse pedikül üst/alt sınırları çizilebilir; ama yöntem seriler arasında değiştirilmemeli.','Rotasyonlu çekim veya yatarak grafi eğriyi küçük gösterir; ayakta PA standarttır.','Ölçüm hatası ±5° civarındadır; <5° artış progresyon kabul edilmez.']},
+
+{id:'kifoz',reg:'Omurga',name:'Torakal kifoz',short:'T4–T12',view:'Ayakta lateral omurga',side:'sagittal · ön ←→ sağ',bones:KYP.svg,
+ pts:{T4a:KYP.T4a,T4b:KYP.T4b,T12a:KYP.T12a,T12b:KYP.T12b},
+ steps:[{t:'T4 üst son plağının arka ve ön köşelerini işaretleyin (omuz gölgesi T1–T3\'ü örttüğü için T4 tercih edilir; bazı kaynaklar T5 kullanır).',p:['T4a','T4b']},
+  {t:'T12 alt son plağının arka ve ön köşelerini işaretleyin.',p:['T12a','T12b']},
+  {t:'İki son plak çizgisi (veya dikleri) arasındaki Cobb açısı torakal kifozdur.',p:[]}],
+ calc(P){const o=G(),a=angB(sub(P.T4b,P.T4a),sub(P.T12b,P.T12a));cobbDraw(o,P.T4a,P.T4b,P.T12a,P.T12b,a,[0,1,2]);return{g:o.g,out:[{k:'Torakal kifoz',v:a}],main:a}},
+ judge(v){return v<20?lvl('warn','<20°: hipokifoz (düz sırt)'):v<=45?lvl('ok','Normal'):v<=50?lvl('warn','45–50°: sınırda hiperkifoz'):lvl('bad','>50°: hiperkifoz (Scheuermann, osteoporotik kırık?)')},
+ norm:[['20–45°','Normal (T4–T12)'],['>45–50°','Hiperkifoz'],['Scheuermann','≥3 ardışık vertebrada ≥5° kama'],['Yaş','Yaşla birlikte artar']],
+ clin:'Sagittal dengenin torakal bileşenidir. Scheuermann kifozu, osteoporotik kompresyon kırıkları ve skolyozun sagittal profili değerlendirilirken kullanılır; cerrahide düzeltme hedefini belirler.',
+ pit:['Kollar gövdeyi örtecek pozisyonda çekim: kollar öne, parmak uçları klavikula üzerinde olmalı.','Üst seviyeyi seri grafilerde değiştirmek (T2, T4, T5 farklı değer verir).','Kama vertebrayı kifoz ölçümüyle karıştırmak: segmenter açı ayrıca ölçülür.']},
+
+{id:'lordoz',reg:'Omurga',name:'Lomber lordoz',short:'L1–S1',view:'Ayakta lateral omurga',side:'sagittal · ön ←→ sağ',bones:SAG.svg,
+ pts:{L1a:SAG.L1a,L1b:SAG.L1b,S1a:SAG.A,S1b:SAG.B},
+ steps:[{t:'L1 üst son plağının arka ve ön köşelerini işaretleyin.',p:['L1a','L1b']},{t:'S1 üst son plağının arka ve ön (promontorium) köşelerini işaretleyin.',p:['S1a','S1b']},{t:'İki çizgi (veya dikleri) arasındaki açı lomber lordozdur.',p:[]}],
+ calc(P){const o=G(),a=angB(sub(P.L1b,P.L1a),sub(P.S1b,P.S1a));cobbDraw(o,P.L1a,P.L1b,P.S1a,P.S1b,a,[0,1,2]);return{g:o.g,out:[{k:'Lomber lordoz',v:a}],main:a}},
+ judge(v){return v<40?lvl('warn','<40°: hipolordoz / düz bel'):v>60?lvl('warn','>60°: hiperlordoz'):lvl('ok','Normal aralık. PI ile uyumu (PI–LL < 10°) ayrıca değerlendirin')},
+ norm:[['40–60°','Normal (L1–S1)'],['PI − LL','<10° uyumlu'],['L4–S1','LL\'nin yaklaşık ⅔\'si']],
+ clin:'Sagittal dengenin ana bileşenidir. Tek başına değil, pelvik insidans ile birlikte yorumlanır: ideal lordoz ≈ PI ± 10°. Füzyon cerrahisinde düzeltme hedefini belirler.',
+ pit:['S1 son plağını L5 ile karıştırmak (geçiş vertebrası varlığını kontrol edin).','Yatarak çekilen grafide lordoz azalır; ayakta grafi kullanın.','L1 yerine T12 kullanılırsa değer farklılaşır; hangi seviyeden ölçüldüğü raporda yazılmalı.']},
+
+{id:'pelvik',reg:'Omurga',name:'Pelvik insidans, sakral eğim, pelvik tilt',short:'PI/SS/PT',view:'Ayakta lateral pelvis + femur başları',side:'sagittal · ön ←→ sağ',bones:SAG.svg,
+ pts:{A:SAG.A,B:SAG.B,H:SAG.H},
+ steps:[{t:'S1 üst son plağının arka (A) ve ön (B) köşelerini işaretleyin. Bu çizginin horizontal ile açısı <b>sakral eğimdir (SS)</b>.',p:['A','B']},
+  {t:'Femur başı merkezini (H) bulun; iki baş üst üste değilse iki merkezin orta noktası alınır. S1 son plak orta noktası ile H\'yi birleştirin; bu çizginin vertikal ile açısı <b>pelvik tilttir (PT)</b>.',p:['H']},
+  {t:'S1 son plak orta noktasından plağa dik çizin. Dik ile H çizgisi arasındaki açı <b>pelvik insidanstır (PI)</b>. Daima PI = PT + SS.',p:[]}],
+ calc(P){const o=G(),d=sub(P.B,P.A),Mi=mid(P.A,P.B),HM=sub(P.H,Mi);
+  const ss=deg(Math.atan2(d[1],d[0]));
+  let pt=angB(HM,[0,1]);if(P.H[0]<Mi[0])pt=-pt;
+  let n=norm(perp(d));if(n[1]<0)n=mul(n,-1);
+  const pi=angB(n,HM);
+  o.X(P.A,P.B,'a',0,30);o.L(P.A,add(P.A,[110,0]),'r',0);o.A(P.A,[1,0],d,0,'SS '+f1(ss)+'°',46);
+  o.C(P.H,24,1);o.L(Mi,P.H,'b',1);o.L(Mi,add(Mi,[0,135]),'r',1);o.A(Mi,[0,1],HM,1,'PT',30);
+  o.L(Mi,add(Mi,mul(n,130)),'x',2);o.A(Mi,n,HM,2,'PI '+f1(pi)+'°',62);
+  return{g:o.g,out:[{k:'Pelvik insidans (PI)',v:pi},{k:'Sakral eğim (SS)',v:ss},{k:'Pelvik tilt (PT)',v:pt}],main:pi}},
+ judge(v,out){const pt=out[2].v;return pt>25?lvl('bad','PT >25°: pelvis retrovert, sagittal dengesizliği kompanse ediyor'):pt>20?lvl('warn','PT 20–25°: sınırda kompansasyon'):lvl('ok','PT normal; PI–SS–PT ilişkisi dengeli')},
+ norm:[['PI ≈ 50 ± 10°','Morfolojik, kişiye özgü, değişmez'],['SS 30–50°','Pozisyona bağlı'],['PT 10–20°','>20–25° kompansatuvar retroversiyon'],['PI = PT + SS','Geometrik özdeşlik']],
+ clin:'PI kişiye özgü sabit bir değerdir ve ihtiyaç duyulan lordozu belirler. PT artışı, öne kayan gövdeyi telafi etmek için pelvisin geriye döndüğünü gösterir. Erişkin deformite cerrahisinde (SRS-Schwab) hedefler: PI–LL <10°, PT <20°.',
+ pit:['İki femur başı üst üste değilse orta noktalarını almadan ölçmek.','S1 son plağı yerine sakral promontoryum ucunu tek nokta gibi kullanmak.','PT işaretini ihmal etmek: femur başı S1\'in arkasındaysa PT negatiftir.']},
+
+/* ===== KALÇA ===== */
+{id:'lce',reg:'Kalça',name:'Lateral center-edge açısı (Wiberg)',short:'LCE',view:'AP pelvis',side:'hasta sağı ←',bones:pelvisAP(false),
+ pts:{C:[110,300],C2:[290,300],E:[91,269]},
+ steps:[{t:'Her iki femur başına uygun çember yerleştirip merkezlerini (C, C2) işaretleyin ve birleştirin (referans çizgi).',p:['C','C2']},
+  {t:'C\'den bu referans çizgiye dik bir çizgi çıkın (vertikal referans).',p:[]},
+  {t:'Asetabulumun en lateral kemik kenarını (sourcil\'in lateral ucu, E) işaretleyin; C–E çizgisi ile dik arasındaki açı LCE\'dir.',p:['E']}],
+ calc(P){const o=G(),r=sub(P.C2,P.C);let n=norm(perp(r));if(n[1]>0)n=mul(n,-1);
+  const ce=sub(P.E,P.C);let v=angB(n,ce);if(dot(ce,mul(norm(r),-1))<0)v=-v;
+  o.C(P.C,32,0);o.C(P.C2,32,0);o.L(P.C,P.C2,'r',0);o.L(P.C,add(P.C,mul(n,120)),'a',1);
+  o.L(P.C,add(P.E,mul(norm(ce),25)),'b',2);o.A(P.C,n,ce,2,f1(v)+'°',44);
+  return{g:o.g,out:[{k:'LCE açısı',v}],main:v}},
+ judge(v){return v<20?lvl('bad','<20°: asetabuler displazi (yetersiz örtünme)'):v<25?lvl('warn','20–25°: sınırda displazi'):v<=40?lvl('ok','Normal örtünme'):lvl('warn','>40°: aşırı örtünme (pincer tipi FAİ)')},
+ norm:[['25–40°','Normal'],['20–25°','Sınırda'],['<20°','Displazi'],['>40°','Aşırı örtünme / pincer']],
+ clin:'Femur başının asetabulum tarafından lateral örtünmesini gösterir. Displazi tanısı, periasetabuler osteotomi endikasyonu ve FAİ (pincer) değerlendirmesinde kullanılır.',
+ pit:['E noktasını sklerotik sourcil yerine lateral osteofit / labrum kalsifikasyonuna koymak.','Pelvis rotasyonlu veya tilt\'li ise (koksiks–simfiz mesafesi bozuk) açı yanıltıcıdır.','Referans olarak gerçek vertikali almak: pelvis yan yatmışsa iki baş merkezini birleştiren çizginin diki kullanılmalıdır.']},
+
+{id:'tonnis',reg:'Kalça',name:'Tönnis açısı (asetabuler çatı açısı)',short:'sourcil',view:'AP pelvis',side:'hasta sağı ←',bones:pelvisAP(false),
+ pts:{T1:[152,316],T2:[248,316],S:[133,272],E:[91,269]},
+ steps:[{t:'İki gözyaşı figürünün (teardrop) alt uçlarını birleştirin: horizontal referans.',p:['T1','T2']},
+  {t:'Sourcil\'in (yük taşıyan sklerotik çatı) medial ucunu (S) ve lateral ucunu (E) işaretleyip birleştirin.',p:['S','E']},
+  {t:'S\'den referansa paralel çizin; S–E çizgisi ile arasındaki açı Tönnis açısıdır (lateral uç yukarıdaysa pozitif).',p:[]}],
+ calc(P){const o=G(),h=sub(P.T2,P.T1),lat=mul(norm(h),-1);let up=norm(perp(h));if(up[1]>0)up=mul(up,-1);const se=sub(P.E,P.S);
+  let v=angB(lat,se);if(dot(se,up)<0)v=-v;
+  o.X(P.T1,P.T2,'r',0,60);o.L(P.S,add(P.E,mul(norm(se),20)),'b',1);o.L(P.S,add(P.S,mul(lat,80)),'x',2);o.A(P.S,lat,se,2,f1(v)+'°',56);
+  return{g:o.g,out:[{k:'Tönnis açısı',v}],main:v}},
+ judge(v){return v<0?lvl('warn','<0°: aşırı örtünme (pincer) olasılığı'):v<=10?lvl('ok','Normal'):v<=15?lvl('warn','10–15°: sınırda displazi'):lvl('bad','>15°: displazi, çatı lateralde yetersiz')},
+ norm:[['0–10°','Normal'],['>10°','Displazi (instabilite)'],['<0°','Aşırı örtünme / pincer']],
+ clin:'Yük taşıyan asetabuler çatının eğimini gösterir. Artmış açı femur başının laterale kaymasına zemin hazırlar; displazi ve periasetabuler osteotomi planlamasında LCE ile birlikte değerlendirilir.',
+ pit:['S noktasını sourcil yerine gözyaşı figürüne koymak.','E noktasını labrum kalsifikasyonu ya da osteofite koymak.','Pelvis tilt\'i (lordotik/kifotik çekim) açıyı belirgin değiştirir.']},
+
+{id:'sharp',reg:'Kalça',name:'Sharp açısı',short:'erişkin displazi',view:'AP pelvis',side:'hasta sağı ←',bones:pelvisAP(false),
+ pts:{T1:[152,316],T2:[248,316],E:[91,269]},
+ steps:[{t:'İki gözyaşı figürünün alt uçlarını birleştirin (T1, T2).',p:['T1','T2']},
+  {t:'Asetabulumun lateral kenarını (E) işaretleyin ve aynı taraftaki gözyaşı alt ucuna (T1) birleştirin.',p:['E']},
+  {t:'Bu çizgi ile gözyaşı çizgisi arasındaki açıyı ölçün.',p:[]}],
+ calc(P){const o=G(),h=sub(P.T2,P.T1),lat=mul(norm(h),-1),te=sub(P.E,P.T1),v=angB(lat,te);
+  o.X(P.T1,P.T2,'r',0,70);o.L(P.T1,add(P.E,mul(norm(te),20)),'b',1);o.A(P.T1,lat,te,2,f1(v)+'°',46);
+  return{g:o.g,out:[{k:'Sharp açısı',v}],main:v}},
+ judge(v){return v<=39?lvl('ok','Normal'):v<=42?lvl('warn','40–42°: sınırda'):lvl('bad','>42°: asetabuler displazi')},
+ norm:[['33–39°','Normal erişkin'],['40–42°','Sınırda'],['>42°','Displazi'],['<33°','Derin asetabulum olasılığı']],
+ clin:'Asetabulumun genel eğimini (inklinasyonunu) gösterir; triradiat kıkırdak kapandıktan sonra asetabuler indeksin yerini alır. Erişkin kalça displazisi taramasında kullanılır.',
+ pit:['Gözyaşı yerine iskial tüberositleri referans almak (farklı normal değerler verir).','Lateral kenarı kemiğin en lateral noktası yerine labruma koymak.','Pelvis rotasyonu gözyaşı figürlerini asimetrik yapar.']},
+
+{id:'ai',reg:'Kalça',name:'Asetabuler indeks (pediatrik)',short:'GKD',view:'AP pelvis (bebek)',side:'hasta sağı ←',bones:pelvisAP(true),
+ pts:{Y1:[146,292],Y2:[254,292],E:[91,269]},
+ steps:[{t:'Her iki triradiat (Y) kıkırdağın üst-iç noktalarını birleştirin: <b>Hilgenreiner çizgisi</b>.',p:['Y1','Y2']},
+  {t:'Asetabulumun lateral kemik kenarını (E) işaretleyin ve Y1\'den E\'ye çizgi çekin. Bu çizgi ile Hilgenreiner arasındaki açı asetabuler indekstir.',p:['E']},
+  {t:'E\'den Hilgenreiner\'e dik inen <b>Perkin çizgisini</b> çizin: normalde femur başı (veya metafiz gagası) iç-alt kadranda olmalıdır.',p:[]}],
+ calc(P){const o=G(),h=sub(P.Y2,P.Y1),lat=mul(norm(h),-1),ye=sub(P.E,P.Y1),v=angB(lat,ye);
+  o.X(P.Y1,P.Y2,'r',0,90);o.L(P.Y1,add(P.E,mul(norm(ye),20)),'b',1);o.A(P.Y1,lat,ye,1,f1(v)+'°',40);
+  let n=norm(perp(h));if(n[1]<0)n=mul(n,-1);o.L(sub(P.E,mul(n,70)),add(P.E,mul(n,150)),'x',2);
+  o.T(add(P.E,[-70,64]),'dış',2);o.T(add(P.E,[12,64]),'iç-alt',2);
+  return{g:o.g,out:[{k:'Asetabuler indeks',v}],main:v}},
+ judge(v){return v<=25?lvl('ok','Normal (yaşa göre üst sınırı kontrol edin)'):v<=30?lvl('warn','25–30°: yaşa göre sınırda / hafif displazi'):lvl('bad','>30°: displazi (yenidoğan üst sınırı aşıldı)')},
+ norm:[['Yenidoğan','≤30°'],['6 ay','≤25°'],['1 yaş','≤23–25°'],['2 yaş','≤20–22°']],
+ clin:'Gelişimsel kalça displazisinde (GKD) asetabulum çatısının eğimini ve gelişimini izler. Triradiat kıkırdak açık olduğu sürece (çocukluk) kullanılır; erişkinde yerini LCE ve Tönnis açısına bırakır.',
+ pit:['Pelvis rotasyonlu: obturator foramenler simetrik değilse ölçüm güvenilmez.','Lordotik / tilt\'li çekimde açı yapay olarak değişir.','E noktasını kıkırdak (görünmeyen) değil, kemikleşmiş en lateral kenara koyun.']},
+
+{id:'nsa',reg:'Kalça',name:'Kollodiafizer (boyun-cisim) açısı',short:'koksa vara/valga',view:'AP kalça (15° iç rotasyon)',side:'',bones:FEMUR,
+ pts:{H:[130,110],N:[180,152],S1:[230,262],S2:[230,430]},
+ steps:[{t:'Femur başına çember oturtun ve merkezini (H) işaretleyin.',p:['H']},
+  {t:'Boynun en dar yerinde iki korteks arasının orta noktasını (N) bulun; H–N çizgisi boyun eksenidir.',p:['N']},
+  {t:'Diafizde iki seviyede (S1, S2) iç ve dış korteksin orta noktalarını işaretleyin: cisim ekseni.',p:['S1','S2']},
+  {t:'Boyun ekseni ile cisim ekseni arasındaki iç (medial) açıyı ölçün.',p:[]}],
+ calc(P){const o=G(),dn=sub(P.N,P.H),ds=sub(P.S2,P.S1),v=angB(mul(dn,-1),ds);const X=inter(P.H,dn,P.S1,ds);
+  o.C(P.H,38,0);
+  if(X&&inView(X,20)){o.L(P.H,X,'a',1);o.L(X,P.S2,'b',2);o.A(X,sub(P.H,X),ds,3,f1(v)+'°',36)}else{o.X(P.H,P.N,'a',1,60);o.X(P.S1,P.S2,'b',2,40)}
+  return{g:o.g,out:[{k:'Kollodiafizer açı',v}],main:v}},
+ judge(v){return v<120?lvl('bad','<120°: koksa vara'):v<125?lvl('warn','120–125°: alt sınır'):v<=135?lvl('ok','Normal (erişkin)'):v<=140?lvl('warn','135–140°: üst sınır'):lvl('bad','>140°: koksa valga')},
+ norm:[['125–135°','Normal erişkin (ort. ~127°)'],['<120°','Koksa vara'],['>140°','Koksa valga'],['Yenidoğan','~150°, yaşla azalır']],
+ clin:'Kalça biyomekaniğini, abduktor kol mesafesini ve implant (proksimal femur çivisi, artroplasti) seçimini etkiler. Pediatrik koksa vara, SCFE ve displazide izlenir.',
+ pit:['Kalça dış rotasyondayken çekim: anteversiyon nedeniyle açı olduğundan büyük ölçülür. 10–15° iç rotasyon gerekir.','Boyun eksenini başın merkezinden geçirmeden yalnızca kortekse paralel çizmek.','Diafiz eksenini tek kortekse göre çizmek.']},
+
+{id:'alpha',reg:'Kalça',name:'Alfa açısı',short:'cam FAİ',view:'Dunn 45° / frog-leg lateral',side:'',bones:FEMUR+CAM,
+ pts:{C:[130,110],N:[180,152],A:[165.2,95.8]},
+ steps:[{t:'Femur başına en uygun çemberi oturtun; merkezi C.',p:['C']},
+  {t:'Boynun en dar yerinin orta noktasını (N) bulun; C–N boyun eksenidir.',p:['N']},
+  {t:'Baş-boyun konturunun çemberin <b>dışına ilk çıktığı</b> noktayı (A) işaretleyin. Boyun ekseni ile C–A arasındaki açı alfa açısıdır.',p:['A']}],
+ calc(P){const o=G(),dN=sub(P.N,P.C),dA=sub(P.A,P.C),v=angB(dN,dA);
+  o.C(P.C,len(dA),0);o.X(P.C,P.N,'a',1,40);o.L(P.C,add(P.A,mul(norm(dA),14)),'b',2);o.A(P.C,dN,dA,2,f1(v)+'°',24);
+  return{g:o.g,out:[{k:'Alfa açısı',v}],main:v}},
+ judge(v){return v<50?lvl('ok','Normal baş-boyun ofseti'):v<=55?lvl('warn','50–55°: sınırda'):lvl('bad','>55°: cam tipi deformite')},
+ norm:[['<50°','Normal'],['50–55°','Sınırda'],['>55°','Cam deformitesi']],
+ clin:'Cam tipi femoroasetabuler sıkışmada (FAİ) baş-boyun bileşkesindeki kemik çıkıntıyı nicel olarak gösterir. Artroskopik osteoplastinin planlanması ve sonrası kontrolde kullanılır.',
+ pit:['AP grafide ölçmek: cam çoğunlukla anterosuperiordadır; Dunn veya frog-leg grafi gerekir.','Çemberi başa değil çıkıntıya oturtmak, alfa açısını olduğundan küçük gösterir.','Boyun eksenini en dar yerden geçirmemek.']},
+
+/* ===== DİZ / ALT EKSTREMİTE ===== */
+{id:'hka',reg:'Diz ve dizilim',name:'Mekanik eksen (HKA açısı)',short:'varus/valgus',view:'Ayakta tüm alt ekstremite (sağ)',side:'lateral ← → medial',bones:LEG,
+ pts:{H:[188,48],K1:[200,242],K2:[200,256],A:[211,458]},
+ steps:[{t:'Femur başı merkezini (H) çember yöntemiyle bulun.',p:['H']},
+  {t:'Diz merkezini işaretleyin: femurda interkondiler çentiğin tepesi (K1), tibiada spinaların ortası (K2). H–K1 femur mekanik eksenidir.',p:['K1','K2']},
+  {t:'Ayak bileği merkezini (A: talus kubbesinin / tibial plafondun ortası) işaretleyin. K2–A tibia mekanik eksenidir.',p:['A']},
+  {t:'Femur ekseninin uzantısı ile tibia ekseni arasındaki sapma açısını ölçün. H–A (Mikulicz) çizgisi dizin neresinden geçtiğini gösterir.',p:[]}],
+ calc(P){const o=G(),u=sub(P.K1,P.H),v=sub(P.A,P.K2),dev=angB(u,v),cr=cross(u,v);
+  const type=dev<0.5?'nötr':(cr<0?'varus':'valgus');
+  o.C(P.H,22,0);o.L(P.H,P.K1,'a',1);o.L(P.K2,P.A,'b',2);o.L(P.K1,add(P.K1,mul(norm(u),110)),'x',3);
+  o.A(P.K1,u,v,3,f1(dev)+'° '+type,70);o.L(P.H,P.A,'r',3);
+  return{g:o.g,out:[{k:'HKA açısı',v:180-dev,sub:f1(dev)+'° '+type},{k:'Sapma',v:dev,sub:type}],main:dev,type}},
+ judge(v,out,r){return v<=3?lvl('ok','Nötr dizilim (180 ± 3°)'):lvl(v>8?'bad':'warn',f1(v)+'° '+r.type+' dizilim')},
+ norm:[['180 ± 3°','Nötr (HKA)'],['<177°','Varus (bazı kaynaklar işaretli gösterir)'],['>183°','Valgus'],['Mikulicz','Diz merkezinin 0–10 mm medialinden geçer']],
+ clin:'Diz osteoartritinde yük dağılımını, yüksek tibial / distal femoral osteotomi planlamasını ve total diz artroplastisinde hizalama hedefini belirler.',
+ pit:['Kısa diz grafisinde ölçmek: kalça ve ayak bileği görünmeden mekanik eksen çizilemez.','Patella önde değilse (rotasyon) varus/valgus yanlış ölçülür.','Anatomik eksen ile mekanik ekseni karıştırmak (femurda aralarında ~6° fark vardır).','Yük vermeden çekim: dinamik varus/valgus gizlenir.']},
+
+{id:'mldfa',reg:'Diz ve dizilim',name:'Mekanik lateral distal femur açısı (mLDFA)',short:'femur kaynaklı',view:'Ayakta tüm alt ekstremite (sağ)',side:'lateral ← → medial',bones:LEG,
+ pts:{H:[188,48],K1:[200,242],F1:[165,247],F2:[236,247]},
+ steps:[{t:'Femur mekanik eksenini çizin: femur başı merkezi (H) → interkondiler çentik (K1).',p:['H','K1']},
+  {t:'Femur kondillerinin en distal noktalarına teğet çizgiyi çizin (F1 lateral, F2 medial): distal femur eklem çizgisi.',p:['F1','F2']},
+  {t:'Eksen ile eklem çizgisi arasındaki <b>lateral</b> açıyı ölçün.',p:[]}],
+ calc(P){const o=G(),ax=sub(P.H,P.K1),jl=sub(P.F2,P.F1);const X=inter(P.K1,ax,P.F1,jl)||P.K1;const lat=P.F1[0]<P.F2[0]?P.F1:P.F2;
+  const v=angB(sub(P.H,X),sub(lat,X));
+  o.C(P.H,22,0);o.L(P.H,X,'a',0);o.X(P.F1,P.F2,'b',1,30);o.A(X,sub(P.H,X),sub(lat,X),2,f1(v)+'°',34);
+  return{g:o.g,out:[{k:'mLDFA',v}],main:v}},
+ judge(v){return v<85?lvl('warn','<85°: distal femurda valgus'):v>90?lvl('warn','>90°: distal femurda varus'):lvl('ok','Normal (87 ± 3°)')},
+ norm:[['85–90°','Normal (ort. 87°)'],['<85°','Femoral valgus'],['>90°','Femoral varus']],
+ clin:'Paley\'in malalignment testinin parçasıdır: deformitenin femurdan mı tibiadan mı kaynaklandığını ayırır; osteotomi seviyesini belirler.',
+ pit:['Kondil teğeti yerine kondil merkezleri arasından çizmek.','Medial ve lateral açıyı karıştırmak: mLDFA her zaman lateralden ölçülür.','Femur dış rotasyondaysa kondiller üst üste biner ve teğet yanlış olur.']},
+
+{id:'mpta',reg:'Diz ve dizilim',name:'Medial proksimal tibia açısı (MPTA)',short:'tibia kaynaklı',view:'Ayakta tüm alt ekstremite (sağ)',side:'lateral ← → medial',bones:LEG,
+ pts:{K2:[200,256],A:[211,458],T1:[160,257],T2:[241,257]},
+ steps:[{t:'Tibia mekanik eksenini çizin: tibial spinaların ortası (K2) → ayak bileği merkezi (A).',p:['K2','A']},
+  {t:'Medial ve lateral tibia platosunun subkondral çizgilerini birleştirin (T1 lateral, T2 medial).',p:['T1','T2']},
+  {t:'Eksen ile plato çizgisi arasındaki <b>medial</b> açıyı (distal tarafta) ölçün.',p:[]}],
+ calc(P){const o=G(),ax=sub(P.A,P.K2),jl=sub(P.T2,P.T1);const X=inter(P.K2,ax,P.T1,jl)||P.K2;const med=P.T1[0]>P.T2[0]?P.T1:P.T2;
+  const v=angB(sub(P.A,X),sub(med,X));
+  o.L(X,P.A,'a',0);o.X(P.T1,P.T2,'b',1,30);o.A(X,sub(P.A,X),sub(med,X),2,f1(v)+'°',34);
+  return{g:o.g,out:[{k:'MPTA',v}],main:v}},
+ judge(v){return v<85?lvl('warn','<85°: proksimal tibia varusu (YTO adayı)'):v>90?lvl('warn','>90°: proksimal tibia valgusu'):lvl('ok','Normal (87 ± 3°)')},
+ norm:[['85–90°','Normal (ort. 87°)'],['<85°','Tibial varus'],['>90°','Tibial valgus']],
+ clin:'Varus gonartrozunda deformitenin tibial kaynağını gösterir; açık/kapalı kama yüksek tibial osteotomi planlamasında düzeltme miktarını belirler.',
+ pit:['Plato çizgisini osteofit uçlarına göre çizmek.','Medial platonun aşınmasını eksen hatası sanmak: eklem çizgisi uyumsuzluğunu (JLCA) ayrıca değerlendirin.','Ayak bileği merkezini medial malleole kaydırmak.']},
+
+{id:'afta',reg:'Diz ve dizilim',name:'Anatomik femorotibial açı (aFTA)',short:'anatomik eksen',view:'Ayakta tüm alt ekstremite (sağ)',side:'lateral ← → medial',bones:LEG,
+ pts:{FA1:[176,100],FA2:[192,190],TA1:[202,312],TA2:[211,440]},
+ steps:[{t:'Femur anatomik eksenini çizin: diafizin iki seviyesinde korteksler arası orta noktalar (FA1, FA2).',p:['FA1','FA2']},
+  {t:'Tibia anatomik eksenini çizin: diafizin iki seviyesinde orta noktalar (TA1, TA2).',p:['TA1','TA2']},
+  {t:'İki eksenin diz seviyesindeki kesişim açısını ölçün; lateral açı (≈174°) ya da valgus derecesi olarak raporlanır.',p:[]}],
+ calc(P){const o=G(),f=sub(P.FA2,P.FA1),t=sub(P.TA2,P.TA1),dev=angB(f,t),valg=cross(f,t)>0?dev:-dev;
+  const X=inter(P.FA1,f,P.TA1,t)||mid(P.FA2,P.TA1),lab=f1(Math.abs(valg))+'° '+(valg>=0?'valgus':'varus');
+  o.L(sub(P.FA1,mul(norm(f),30)),X,'a',0);o.L(X,add(P.TA2,mul(norm(t),10)),'b',1);o.L(X,add(X,mul(norm(f),110)),'x',2);o.A(X,f,t,2,lab,80);
+  return{g:o.g,out:[{k:'aFTA (lateral)',v:180-valg,sub:lab}],main:valg}},
+ judge(v){return v<0?lvl('bad','Anatomik varus: belirgin varus dizilim'):v<4?lvl('warn','<4° valgus: göreli varus'):v<=8?lvl('ok','Normal fizyolojik valgus'):lvl('warn','>8° valgus: genu valgum')},
+ norm:[['5–7° valgus','Normal (lateral açı ≈173–175°)'],['<4°','Göreli varus'],['>8–10°','Genu valgum']],
+ clin:'Uzun grafi yokken diz grafisinde dizilimi tahmin etmekte ve artroplastide distal femur kesisinin valgus açısını (genelde 5–7°) belirlemekte kullanılır.',
+ pit:['Kısa grafide femur ekseni distal metafize göre çizilirse açı sapar.','Mekanik eksen (HKA) ile karıştırmak: femurda aralarında ~6° fark vardır.','Femur eğriliği (bowing) varsa anatomik eksen yanıltıcıdır.']},
+
+{id:'aldfa',reg:'Diz ve dizilim',name:'Anatomik lateral distal femur açısı (aLDFA)',short:'anatomik',view:'Ayakta tüm alt ekstremite (sağ)',side:'lateral ← → medial',bones:LEG,
+ pts:{FA1:[176,100],FA2:[192,190],F1:[165,247],F2:[236,247]},
+ steps:[{t:'Femur anatomik eksenini çizin (diafiz orta noktaları FA1, FA2).',p:['FA1','FA2']},
+  {t:'Kondillerin distal teğet çizgisini çizin (F1 lateral, F2 medial).',p:['F1','F2']},
+  {t:'Anatomik eksen ile eklem çizgisi arasındaki lateral açıyı ölçün.',p:[]}],
+ calc(P){const o=G(),ax=sub(P.FA2,P.FA1),jl=sub(P.F2,P.F1);const X=inter(P.FA1,ax,P.F1,jl)||P.FA2;const lat=P.F1[0]<P.F2[0]?P.F1:P.F2;
+  const v=angB(sub(P.FA1,X),sub(lat,X));
+  o.L(sub(P.FA1,mul(norm(ax),30)),X,'a',0);o.X(P.F1,P.F2,'b',1,30);o.A(X,sub(P.FA1,X),sub(lat,X),2,f1(v)+'°',34);
+  return{g:o.g,out:[{k:'aLDFA',v}],main:v}},
+ judge(v){return v<79?lvl('warn','<79°: distal femur valgusu'):v>83?lvl('warn','>83°: distal femur varusu'):lvl('ok','Normal (81 ± 2°)')},
+ norm:[['79–83°','Normal (ort. 81°)'],['mLDFA − aLDFA','≈ 6° (anatomik–mekanik fark)']],
+ clin:'Kısa grafilerde ve intramedüller rehberle yapılan distal femur osteotomisi / artroplasti kesisinde mLDFA yerine kullanılır.',
+ pit:['Kısa grafide eksenin yalnızca distal 10 cm\'den çizilmesi ±2–3° hata getirir.','Lateral ile medial açıyı karıştırmak.']},
+
+{id:'ldta',reg:'Diz ve dizilim',name:'Lateral distal tibia açısı (LDTA)',short:'ayak bileği',view:'Ayakta tüm alt ekstremite (sağ)',side:'lateral ← → medial',bones:LEG,
+ pts:{K2:[200,256],A:[211,458],D1:[192,460],D2:[226,459]},
+ steps:[{t:'Tibia mekanik eksenini çizin (K2 → A).',p:['K2','A']},
+  {t:'Tibial plafondun subkondral çizgisini çizin (D1 lateral, D2 medial).',p:['D1','D2']},
+  {t:'Eksen ile plafond çizgisi arasındaki lateral (proksimal) açıyı ölçün.',p:[]}],
+ calc(P){const o=G(),ax=sub(P.A,P.K2),dl=sub(P.D2,P.D1);const X=inter(P.K2,ax,P.D1,dl)||P.A;const lat=P.D1[0]<P.D2[0]?P.D1:P.D2;
+  const v=angB(sub(P.K2,X),sub(lat,X));
+  o.L(P.K2,X,'a',0);o.X(P.D1,P.D2,'b',1,30);o.A(X,sub(P.K2,X),sub(lat,X),2,f1(v)+'°',40);
+  return{g:o.g,out:[{k:'LDTA',v}],main:v}},
+ judge(v){return v<86?lvl('warn','<86°: distal tibia valgusu'):v>92?lvl('warn','>92°: distal tibia varusu'):lvl('ok','Normal (89 ± 3°)')},
+ norm:[['86–92°','Normal (ort. 89°)'],['<86°','Distal tibial valgus'],['>92°','Distal tibial varus']],
+ clin:'Deformitenin ayak bileği seviyesinde olup olmadığını gösterir; supramalleoler osteotomi ve ayak bileği artroplastisi planlamasında kullanılır.',
+ pit:['Plafond çizgisini malleol uçlarına göre çizmek.','Ayak bileği rotasyonlu çekimde plafond çift kontur verir.']},
+
+{id:'slope',reg:'Diz ve dizilim',name:'Posterior tibial eğim (slope)',short:'ÖÇB',view:'Lateral diz (kondiller üst üste)',side:'arka ← → ön',bones:KNEE_LAT,
+ pts:{S1:[197,380],S2:[199,465],P2:[140,302],P1:[238,289]},
+ steps:[{t:'Proksimal tibia anatomik eksenini çizin: platonun ~5 cm ve ~15 cm altında ön ve arka korteksin orta noktaları (S1, S2).',p:['S1','S2']},
+  {t:'Eksene, plato seviyesinde dik bir referans çizgi çizin.',p:[]},
+  {t:'Medial platonun ön ve arka kenarlarına teğet çizgiyi çizin (P1 ön, P2 arka).',p:['P1','P2']},
+  {t:'Plato çizgisi ile dik referans arasındaki açı posterior eğimdir.',p:[]}],
+ calc(P){const o=G(),a=sub(P.S1,P.S2);let pp=norm(perp(a));if(pp[0]<0)pp=mul(pp,-1);const d=sub(P.P1,P.P2);
+  const v=-deg(Math.atan2(cross(pp,d),dot(pp,d)));const X=inter(P.S1,a,P.P2,d)||mid(P.P1,P.P2);
+  o.L(P.S2,X,'a',0);o.L(sub(X,mul(pp,90)),add(X,mul(pp,95)),'r',1);o.X(P.P2,P.P1,'b',2,25);o.A(X,pp,d,3,f1(v)+'°',72);
+  return{g:o.g,out:[{k:'Posterior tibial eğim',v}],main:v}},
+ judge(v){return v<3?lvl('warn','<3°: azalmış / anterior eğim'):v<=10?lvl('ok','Normal'):v<=12?lvl('warn','10–12°: artmış'):lvl('bad','>12°: belirgin artmış, ÖÇB grefti için risk')},
+ norm:[['5–10°','Normal (ort. ~7°)'],['>12°','ÖÇB rerüptür riski artar'],['TDA','Implanta göre 0–7° hedeflenir']],
+ clin:'Artmış eğim tibianın öne kaymasını artırır, ön çapraz bağ ve greft yükünü yükseltir. Revizyon ÖÇB cerrahisinde slope düzeltici osteotomi, artroplastide tibial kesi açısı için kullanılır.',
+ pit:['Kondiller üst üste değilse (rotasyon) medial ve lateral plato karışır.','Kısa grafide eksen için yeterli diafiz yoksa tibia ön korteksi kullanılır; bu değer ~3–4° farklıdır ve yöntem raporlanmalıdır.','Medial ve lateral plato eğimi farklıdır; hangisinin ölçüldüğü belirtilmelidir.']},
+
+/* ===== AYAK & AYAK BİLEĞİ ===== */
+{id:'hva',reg:'Ayak ve ayak bileği',name:'Halluks valgus açısı (HVA)',short:'MTP-1',view:'Ayakta AP ayak',side:'medial ← → lateral',bones:FOOT_AP,
+ pts:{Mp:[146.9,381.4],Md:[123.1,238.6],Pp:[127.6,181.6],Pd:[144.4,138.4]},
+ steps:[{t:'1. metatarsın diafiz eksenini çizin: proksimal ve distal diafizde iç-dış korteksin orta noktaları (Mp, Md).',p:['Mp','Md']},
+  {t:'Halluks proksimal falanksının eksenini çizin: proksimal ve distal metafiz orta noktaları (Pp, Pd).',p:['Pp','Pd']},
+  {t:'İki eksen arasındaki açıyı ölçün.',p:[]}],
+ calc(P){const o=G(),m=sub(P.Md,P.Mp),p=sub(P.Pd,P.Pp),v=angB(m,p),X=inter(P.Mp,m,P.Pp,p);
+  if(X&&inView(X)){o.L(P.Mp,add(X,mul(norm(m),40)),'a',0);o.L(X,add(P.Pd,mul(norm(p),20)),'b',1);o.A(X,m,p,2,f1(v)+'°',30)}else{o.X(P.Mp,P.Md,'a',0);o.X(P.Pp,P.Pd,'b',1)}
+  return{g:o.g,out:[{k:'HVA',v}],main:v}},
+ judge(v){return v<15?lvl('ok','Normal'):v<20?lvl('warn','15–20°: hafif halluks valgus'):v<=40?lvl('warn','20–40°: orta halluks valgus'):lvl('bad','>40°: ağır halluks valgus')},
+ norm:[['<15°','Normal'],['15–20°','Hafif'],['20–40°','Orta'],['>40°','Ağır']],
+ clin:'Halluks valgus şiddetini sınıflar; IMA ile birlikte distal (chevron), diafizer (scarf) veya proksimal / Lapidus osteotomi seçimini belirler.',
+ pit:['Yük vermeden çekilen grafide açı olduğundan küçük ölçülür.','Ekseni metatars başının iç kenarına göre çizmek; diafiz orta noktaları kullanılmalı.','Falanks eksenini tırnak falanksına uzatmak (interfalangeal valgus karışır).']},
+
+{id:'ima',reg:'Ayak ve ayak bileği',name:'Birinci intermetatarsal açı (IMA)',short:'MT1–MT2',view:'Ayakta AP ayak',side:'medial ← → lateral',bones:FOOT_AP,
+ pts:{Mp:[146.9,381.4],Md:[123.1,238.6],Np:[189,370.5],Nd:[194,223.5]},
+ steps:[{t:'1. metatars diafiz eksenini çizin (Mp, Md).',p:['Mp','Md']},
+  {t:'2. metatars diafiz eksenini çizin (Np, Nd).',p:['Np','Nd']},
+  {t:'İki eksenin proksimalde kesiştiği açıyı ölçün.',p:[]}],
+ calc(P){const o=G(),m1=sub(P.Md,P.Mp),m2=sub(P.Nd,P.Np),v=angB(m1,m2),X=inter(P.Mp,m1,P.Np,m2);
+  if(X&&inView(X,-5)){o.L(X,add(P.Md,mul(norm(m1),20)),'a',0);o.L(X,add(P.Nd,mul(norm(m2),20)),'b',1);o.A(X,m1,m2,2,f1(v)+'°',60)}
+  else{o.X(P.Mp,P.Md,'a',0,30);o.X(P.Np,P.Nd,'b',1,30);const n2=norm(m2);
+    o.L(sub(P.Md,mul(n2,90)),add(P.Md,mul(n2,30)),'x',2);o.A(P.Md,mul(n2,-1),mul(m1,-1),2,f1(v)+'°',70);
+    o.T(add(P.Md,[-95,110]),'MT2 eksenine paralel',2)}
+  return{g:o.g,out:[{k:'IMA',v}],main:v}},
+ judge(v){return v<9?lvl('ok','Normal'):v<=11?lvl('warn','9–11°: hafif'):v<=16?lvl('warn','11–16°: orta'):lvl('bad','>16°: ağır, proksimal düzeltme gerekir')},
+ norm:[['<9°','Normal'],['9–11°','Hafif'],['11–16°','Orta'],['>16°','Ağır']],
+ clin:'Metatarsus primus varusunun ölçüsüdür. Distal osteotomi genelde IMA <13–15° için yeterlidir; daha büyük açılarda proksimal osteotomi veya Lapidus artrodezi tercih edilir.',
+ pit:['MT2 ekseni yerine MT2\'nin medial korteksini kullanmak.','Metatarsus adductus varlığında IMA olduğundan küçük görünür.','Ayak supinasyonda / yük vermeden çekilmiş grafi.']},
+
+{id:'dmaa',reg:'Ayak ve ayak bileği',name:'Distal metatarsal eklem açısı (DMAA)',short:'MT1 başı',view:'Ayakta AP ayak',side:'medial ← → lateral',bones:FOOT_AP,
+ pts:{Mp:[146.9,381.4],Md:[123.1,238.6],J1:[101,199.4],J2:[129,200.6]},
+ steps:[{t:'1. metatars diafiz eksenini çizin (Mp, Md).',p:['Mp','Md']},
+  {t:'Metatars başı eklem yüzünün medial (J1) ve lateral (J2) kenarlarını işaretleyip birleştirin.',p:['J1','J2']},
+  {t:'Eksene dik çizgi ile eklem yüzü çizgisi arasındaki açı DMAA\'dır (lateral eğim pozitif).',p:[]}],
+ calc(P){const o=G(),a=sub(P.Md,P.Mp);let pp=norm(perp(a));if(pp[0]<0)pp=mul(pp,-1);let dj=sub(P.J2,P.J1);if(dot(dj,pp)<0)dj=mul(dj,-1);
+  const v=deg(Math.atan2(cross(pp,dj),dot(pp,dj))),c=mid(P.J1,P.J2),Y=inter(P.Mp,a,c,pp)||c;
+  o.L(P.Mp,Y,'a',0);o.X(P.J1,P.J2,'b',1,18);o.L(sub(Y,mul(pp,30)),add(Y,mul(pp,60)),'r',2);o.A(Y,pp,dj,2,f1(v)+'°',48);
+  return{g:o.g,out:[{k:'DMAA',v,sub:v>=0?'lateral':'medial'}],main:v}},
+ judge(v){return Math.abs(v)<=10?lvl('ok','Normal'):v>10?lvl('warn','>10°: artmış lateral eğim (konjruent halluks valgus)'):lvl('warn','Medial eğim')},
+ norm:[['≤10°','Normal (çoğu kaynakta ort. 6–8°)'],['>10°','Artmış (konjruent halluks valgus)']],
+ clin:'Halluks valgusta eklem yüzünün kendisinin laterale eğik olup olmadığını gösterir. DMAA yüksekse yalnız yumuşak doku dengelemesi yetmez; biplanar chevron gibi DMAA\'yı düzelten osteotomi gerekir.',
+ pit:['Gözlemciler arası güvenilirliği düşüktür; eklem yüzü kenarlarını kortikal köşelerden alın.','Metatars pronasyonu eklem yüzünü eğik gösterebilir (yük verdirerek, rotasyonsuz grafi).']},
+
+{id:'bohler',reg:'Ayak ve ayak bileği',name:'Böhler açısı',short:'kalkaneus',view:'Lateral ayak bileği / kalkaneus',side:'arka ← → ön',bones:CALC,
+ pts:{A:[288,252],B:[205,233],C:[98,262]},
+ steps:[{t:'Ön çıkıntının (processus anterior) en yüksek noktasını (A) ve posterior faset en yüksek noktasını (B) birleştirin.',p:['A','B']},
+  {t:'B\'yi tuber kalkanei\'nin en üst noktasıyla (C) birleştirin.',p:['C']},
+  {t:'A–B çizgisinin uzantısı ile B–C çizgisi arasındaki açı Böhler açısıdır.',p:[]}],
+ calc(P){const o=G(),d1=sub(P.B,P.A),d2=sub(P.C,P.B),v=angB(d1,d2);
+  o.L(P.A,add(P.B,mul(norm(d1),80)),'a',0);o.L(P.B,P.C,'b',1);o.A(P.B,d1,d2,2,f1(v)+'°',46);
+  return{g:o.g,out:[{k:'Böhler açısı',v}],main:v}},
+ judge(v){return v<20?lvl('bad','<20°: posterior faset çökmesi (intraartiküler kırık)'):v<=40?lvl('ok','Normal'):lvl('warn','>40°: olağandışı yüksek, kontrol edin')},
+ norm:[['20–40°','Normal'],['<20°','Faset çökmesi'],['Karşı taraf','Kıyas için en iyi referans']],
+ clin:'Kalkaneus kırıklarında posterior fasetin çökme derecesini gösterir; azalmış açı kötü fonksiyonel sonuçla ilişkilidir ve redüksiyonun yeterliliğini değerlendirmede kullanılır.',
+ pit:['B noktasını posterior faset yerine talusa koymak.','Oblik/rotasyonlu lateral grafide fasetler çift kontur verir.','Normal aralık geniştir; karşı taraf ile karşılaştırma daha değerlidir.']},
+
+{id:'gissane',reg:'Ayak ve ayak bileği',name:'Gissane (kritik) açısı',short:'kalkaneus',view:'Lateral ayak bileği / kalkaneus',side:'arka ← → ön',bones:CALC,
+ pts:{G:[232,264],P:[200,238],Q:[288,252]},
+ steps:[{t:'Sinüs tarsinin altındaki iki güçlü kortikal payandanın birleştiği köşeyi (G) bulun.',p:['G']},
+  {t:'Posterior fasetin üst yüzeyi boyunca çizgiyi (G → P) çizin.',p:['P']},
+  {t:'Ön çıkıntı üst yüzeyi boyunca ikinci çizgiyi (G → Q) çizin ve aradaki açıyı ölçün.',p:['Q']}],
+ calc(P){const o=G(),a=sub(P.P,P.G),b=sub(P.Q,P.G),v=angB(a,b);
+  o.L(P.G,add(P.P,mul(norm(a),20)),'a',1);o.L(P.G,add(P.Q,mul(norm(b),15)),'b',2);o.A(P.G,a,b,2,f1(v)+'°',26);
+  return{g:o.g,out:[{k:'Gissane açısı',v}],main:v}},
+ judge(v){return v<120?lvl('warn','<120°: olağandışı dar'):v<=145?lvl('ok','Normal'):lvl('bad','>145°: posterior faset çökmesi lehine')},
+ norm:[['120–145°','Normal'],['>145°','Faset çökmesi / kırık']],
+ clin:'Böhler açısını tamamlar: posterior faset depresyonunda açı genişler. Kalkaneus kırığı redüksiyonunun kontrolünde kullanılır.',
+ pit:['G noktasını sinüs tarsinin yumuşak doku gölgesine koymak.','Faset çizgisini talusun alt yüzeyine göre çizmek.']},
+
+{id:'meary',reg:'Ayak ve ayak bileği',name:'Meary açısı (talus–1. metatars)',short:'pes planus/kavus',view:'Ayakta lateral ayak',side:'arka ← → ön',bones:FOOT_LAT,
+ pts:{T1:[135,276],T2:[210,304],M1:[268,327],M2:[330,351]},
+ steps:[{t:'Talus uzun eksenini çizin: talus gövdesi ortası ile talus başı ortası (T1, T2).',p:['T1','T2']},
+  {t:'1. metatars diafiz eksenini çizin (M1, M2).',p:['M1','M2']},
+  {t:'İki eksen arasındaki açıyı ölçün. Apeks plantar ise pes planus, apeks dorsal ise pes kavus.',p:[]}],
+ calc(P){const o=G(),t=sub(P.T2,P.T1),m=sub(P.M2,P.M1);
+  const v=deg(Math.atan2(m[1],m[0]))-deg(Math.atan2(t[1],t[0]));
+  o.X(P.T1,P.T2,'a',0,60);o.X(P.M1,P.M2,'b',1,50);const X=inter(P.T1,t,P.M1,m);
+  if(Math.abs(v)>1&&X&&inView(X,-10))o.A(X,t,m,2,f1(v)+'°',44);else o.T(add(mid(P.T2,P.M1),[-20,-30]),f1(v)+'°',2);
+  return{g:o.g,out:[{k:'Meary açısı',v,sub:v>4?'apeks dorsal':v<-4?'apeks plantar':'kolineer'}],main:v}},
+ judge(v){return Math.abs(v)<=4?lvl('ok','Normal: eksenler aynı doğrultuda'):v<0?lvl(v<-15?'bad':'warn',Math.abs(v)>15?'Ağır pes planus':'Pes planus (apeks plantar)'):lvl(v>15?'bad':'warn',v>15?'Ağır pes kavus':'Pes kavus (apeks dorsal)')},
+ norm:[['0 ± 4°','Normal'],['>4° apeks plantar','Pes planus (15–30° orta, >30° ağır)'],['>4° apeks dorsal','Pes kavus']],
+ clin:'Medial longitudinal arkın lateral grafideki en kullanışlı göstergesidir. Planus ve kavus deformitesinin derecesini ve cerrahi düzeltmenin yeterliliğini izler.',
+ pit:['Yük vermeden çekilen grafide ark yapay olarak yüksek görünür.','Talus eksenini yalnızca talus boynuna göre çizmek.','Ayak rotasyonlu: metatarslar üst üste binmezse MT1 ekseni yanlış seçilir.']},
+
+{id:'pitch',reg:'Ayak ve ayak bileği',name:'Kalkaneal pitch açısı',short:'ark yüksekliği',view:'Ayakta lateral ayak',side:'arka ← → ön',bones:FOOT_LAT,
+ pts:{G1:[70,380],G2:[345,380],C1:[78,375],C2:[180,338]},
+ steps:[{t:'Destek yüzeyi çizgisini çizin: kalkaneusun plantar en alt noktası ile 5. metatars başının alt noktası (G1, G2).',p:['G1','G2']},
+  {t:'Kalkaneusun alt kenarına teğet çizgiyi çizin (C1 tuber, C2 ön alt kenar).',p:['C1','C2']},
+  {t:'İki çizgi arasındaki açıyı ölçün.',p:[]}],
+ calc(P){const o=G(),g=sub(P.G2,P.G1),c=sub(P.C2,P.C1),v=angB(g,c);
+  o.L(P.G1,P.G2,'r',0);o.X(P.C1,P.C2,'a',1,40);const X=inter(P.G1,g,P.C1,c)||P.C1;o.A(X,g,c,2,f1(v)+'°',70);
+  return{g:o.g,out:[{k:'Kalkaneal pitch',v}],main:v}},
+ judge(v){return v<17?lvl('warn','<17°: düşük ark, pes planus'):v<=32?lvl('ok','Normal'):lvl('warn','>32°: yüksek ark, pes kavus')},
+ norm:[['17–32°','Normal'],['<17°','Pes planus'],['>32°','Pes kavus']],
+ clin:'Arka ayağın sagittal eğimini, dolayısıyla ark yüksekliğini gösterir. Meary açısı ile birlikte planus/kavus değerlendirmesinde ve kalkaneus osteotomisi planlamasında kullanılır.',
+ pit:['Referans olarak gerçek horizontali almak: destek yüzeyi çizgisi kullanılmalı.','Kalkaneus alt kenarında plantar spur (topuk dikeni) noktasını kullanmak.']},
+
+{id:'tcl',reg:'Ayak ve ayak bileği',name:'Talokalkaneal açı (lateral)',short:'arka ayak',view:'Ayakta lateral ayak',side:'arka ← → ön',bones:FOOT_LAT,
+ pts:{T1:[135,276],T2:[210,304],C1:[78,375],C2:[180,338]},
+ steps:[{t:'Talus uzun eksenini çizin (T1 gövde ortası, T2 baş ortası).',p:['T1','T2']},
+  {t:'Kalkaneus eksenini çizin: plantar yüzeye teğet çizgi (C1 tuber, C2 ön alt kenar).',p:['C1','C2']},
+  {t:'İki çizginin önde kesiştiği açıyı ölçün.',p:[]}],
+ calc(P){const o=G(),t=sub(P.T2,P.T1),c=sub(P.C2,P.C1),v=angB(t,c),X=inter(P.T1,t,P.C1,c);
+  if(X&&inView(X,-5)){o.L(P.T1,add(X,mul(norm(t),20)),'a',0);o.L(P.C1,add(X,mul(norm(c),20)),'b',1);o.A(X,mul(t,-1),mul(c,-1),2,f1(v)+'°',50)}
+  else{o.X(P.T1,P.T2,'a',0);o.X(P.C1,P.C2,'b',1);o.T(add(P.T2,[10,-20]),f1(v)+'°',2)}
+  return{g:o.g,out:[{k:'Lateral talokalkaneal açı',v}],main:v}},
+ judge(v){return v<25?lvl('warn','<25°: arka ayak varusu (PEV, pes kavus)'):v<=45?lvl('ok','Normal'):lvl('warn','>45°: arka ayak valgusu (pes planus)')},
+ norm:[['25–45°','Normal erişkin'],['<25°','Arka ayak varus / PEV'],['>45°','Arka ayak valgus / planus'],['Çocuk','25–55°']],
+ clin:'Talus ile kalkaneusun birbirine göre dizilimini gösterir. Pes ekinovarusta (PEV) iki kemik paralelleşir (açı azalır), planovalgusta açı büyür; tedavi takibinde AP Kite açısıyla birlikte kullanılır.',
+ pit:['Talus eksenini talus boynuna paralel çizmek; gövde ve baş ortaları kullanılmalı.','PEV\'de ayak maksimum dorsifleksiyonda çekilmezse açı yanıltıcıdır.']},
+
+/* ===== DİRSEK ===== */
+{id:'baumann',reg:'Dirsek',name:'Baumann açısı',short:'suprakondiler kırık',view:'AP dirsek (tam ekstansiyon)',side:'lateral ← → medial',bones:ELBOW,
+ pts:{H1:[210,30],H2:[210,170],B1:[150,258],B2:[200,274]},
+ steps:[{t:'Humerus diafizinin uzun eksenini çizin (H1, H2: iki seviyede korteksler arası orta nokta).',p:['H1','H2']},
+  {t:'Lateral kondil (kapitellum) fizis hattı boyunca çizgi çizin (B1, B2).',p:['B1','B2']},
+  {t:'İki çizgi arasındaki dar açıyı ölçün; mutlaka karşı dirsek ile karşılaştırın.',p:[]}],
+ calc(P){const o=G(),h=sub(P.H1,P.H2);let b=sub(P.B1,P.B2);const X=inter(P.H2,h,P.B2,b)||P.H2;
+  const v=acute(h,b);if(angB(h,b)>90)b=mul(b,-1);
+  o.L(P.H1,X,'a',0);o.X(P.B1,P.B2,'b',1,30);o.A(X,h,b,2,f1(v)+'°',40);
+  return{g:o.g,out:[{k:'Baumann açısı',v}],main:v}},
+ judge(v){return v<64?lvl('warn','<64°: varus malpozisyon şüphesi (kubitus varus riski)'):v<=81?lvl('ok','Normal aralık; karşı tarafla fark <5° olmalı'):lvl('warn','>81°: valgus malpozisyon şüphesi')},
+ norm:[['64–81°','Normal (ort. ~72°)'],['Taraflar arası','Fark ≤5°'],['Azalma','Kubitus varus']],
+ clin:'Çocuk suprakondiler humerus kırıklarında koronal düzlemdeki redüksiyonun yeterliliğini gösterir; azalması kubitus varusa (gunstock deformitesi) yol açar.',
+ pit:['Dirsek fleksiyonda veya humerus rotasyonlu çekim: her 10° rotasyon açıyı ~6° değiştirebilir.','Fizis çizgisini kapitellum ossifikasyon merkezinin dış konturuna göre çizmek.','Karşı taraf ile karşılaştırmadan karar vermek.']},
+
+{id:'carry',reg:'Dirsek',name:'Taşıma açısı',short:'kubitus valgus/varus',view:'AP dirsek (tam ekstansiyon, supinasyon)',side:'lateral ← → medial',bones:ELBOW,
+ pts:{H1:[210,30],H2:[210,170],F1:[208,330],F2:[182,462]},
+ steps:[{t:'Humerus diafiz eksenini çizin (H1, H2).',p:['H1','H2']},
+  {t:'Ön kol (ulna) uzun eksenini çizin (F1, F2).',p:['F1','F2']},
+  {t:'Humerus ekseninin distal uzantısı ile ön kol ekseni arasındaki açıyı ölçün.',p:[]}],
+ calc(P){const o=G(),h=sub(P.H2,P.H1),f=sub(P.F2,P.F1),v=angB(h,f);const X=inter(P.H1,h,P.F1,f)||P.H2;
+  o.L(P.H1,X,'a',0);o.L(X,add(X,mul(norm(h),150)),'x',2);o.L(X,add(P.F2,mul(norm(f),10)),'b',1);o.A(X,h,f,2,f1(v)+'°',70);
+  return{g:o.g,out:[{k:'Taşıma açısı',v}],main:v}},
+ judge(v){return v<5?lvl('warn','<5°: kubitus varus eğilimi'):v<=15?lvl('ok','Normal fizyolojik valgus'):lvl('warn','>15°: kubitus valgus (ulnar sinir germe riski)')},
+ norm:[['5–15°','Normal valgus'],['<5° / varus','Kubitus varus'],['>15°','Kubitus valgus']],
+ clin:'Dirsek kırıkları sonrası açısal deformiteyi değerlendirir. Kubitus valgus geç ulnar nöropatiye, kubitus varus posterolateral instabiliteye zemin hazırlayabilir.',
+ pit:['Dirsek tam ekstansiyonda değilse ölçülemez.','Ön kol pronasyonda: açı kaybolur.','Radius eksenini kullanmak; ulna veya ön kol orta ekseni tercih edilir.']},
+
+/* ===== EL BİLEĞİ ===== */
+{id:'radinc',reg:'El bileği',name:'Radyal inklinasyon',short:'distal radius',view:'PA el bileği',side:'radyal ← → ulnar',bones:WRIST_AP,
+ pts:{R1:[179,460],R2:[179,340],S:[110,188],U:[213,231]},
+ steps:[{t:'Radius uzun eksenini çizin: diafizde iki seviyede korteksler arası orta nokta (R1, R2).',p:['R1','R2']},
+  {t:'Sigmoid çentiğin ulnar köşesinde (U) eksene dik referans çizgi çizin.',p:['U']},
+  {t:'Radial stiloid ucunu (S) U\'ya birleştirin. Bu çizgi ile dik referans arasındaki açı radyal inklinasyondur.',p:['S']}],
+ calc(P){const o=G(),a=sub(P.R2,P.R1);let pp=norm(perp(a));if(dot(pp,sub(P.S,P.U))<0)pp=mul(pp,-1);
+  const su=sub(P.S,P.U),v=angB(pp,su);
+  o.L(P.R1,add(P.R2,mul(norm(a),120)),'a',0);o.L(sub(P.U,mul(pp,30)),add(P.U,mul(pp,140)),'r',1);o.L(P.U,add(P.S,mul(norm(su),15)),'b',2);o.A(P.U,pp,su,2,f1(v)+'°',70);
+  return{g:o.g,out:[{k:'Radyal inklinasyon',v}],main:v}},
+ judge(v){return v<15?lvl('bad','<15°: kabul edilemez kayıp (kırık/malunion)'):v<21?lvl('warn','15–21°: azalmış'):v<=25?lvl('ok','Normal'):lvl('warn','>25°: artmış')},
+ norm:[['21–25°','Normal (ort. 22–23°)'],['≥15°','Kabul edilebilir redüksiyon'],['<15°','Kabul edilemez']],
+ clin:'Distal radius kırıklarında kısalma ve radyal yönde açılanmanın göstergesidir; redüksiyonun ve tedavi seçiminin (alçı vs. cerrahi) temel kriterlerindendir.',
+ pit:['Ulnar köşe yerine lunat fossanın ortasını kullanmak.','El bileği rotasyonlu (PA yerine oblik) çekim stiloid konumunu değiştirir.','Eksen için yeterli diafiz görünmeyen grafide ölçüm hatası artar.']},
+
+{id:'voltilt',reg:'El bileği',name:'Volar tilt (palmar eğim)',short:'distal radius',view:'Lateral el bileği (gerçek lateral)',side:'dorsal ← → volar',bones:WRIST_LAT,
+ pts:{R1:[201,460],R2:[201,320],D:[168,205],V:[234,217]},
+ steps:[{t:'Radius uzun eksenini çizin (R1, R2).',p:['R1','R2']},
+  {t:'Dorsal kenarın distal ucunda eksene dik referans çizgi çizin.',p:['D']},
+  {t:'Dorsal (D) ve volar (V) eklem kenarlarını birleştirin. Dik referans ile aradaki açı volar tilttir; eklem yüzü dorsale bakıyorsa negatif (dorsal tilt).',p:['V']}],
+ calc(P){const o=G(),a=sub(P.R2,P.R1);let pp=norm(perp(a));if(pp[0]<0)pp=mul(pp,-1);const dv=sub(P.V,P.D);
+  let v=angB(pp,dv);if(cross(pp,dv)<0)v=-v;
+  o.L(P.R1,add(P.R2,mul(norm(a),100)),'a',0);o.L(sub(P.D,mul(pp,25)),add(P.D,mul(pp,110)),'r',1);o.X(P.D,P.V,'b',2,20);o.A(P.D,pp,dv,2,f1(v)+'°',80);
+  return{g:o.g,out:[{k:'Volar tilt',v,sub:v<0?'dorsal tilt':'volar'}],main:v}},
+ judge(v){return v<-10?lvl('bad','>10° dorsal tilt: kabul edilemez'):v<0?lvl('warn','Dorsal tilt (0 ile −10° arası, sınırda)'):v<=22?lvl('ok','Normal volar eğim'):lvl('warn','>22°: aşırı volar tilt (Smith tipi)')},
+ norm:[['+11° (0–22°)','Normal volar'],['≤10° dorsal','Kabul edilebilir sınır'],['>10° dorsal','Kabul edilemez']],
+ clin:'Distal radius kırıklarında (Colles) dorsal açılanmayı ölçer. Dorsal tilt, DRUE uyumsuzluğu ve karpal instabilite (DISI) ile ilişkilidir; cerrahi endikasyonda temel parametredir.',
+ pit:['Gerçek lateral değilse (pisiform skafoid ile üst üste değil) değer ±5° yanılır.','Volar kenar yerine volar dudağın osteofitini kullanmak.','Tilt işaretini (volar/dorsal) belirtmemek.']},
+
+{id:'sl',reg:'El bileği',name:'Skafolunat açı',short:'karpal instabilite',view:'Lateral el bileği (gerçek lateral)',side:'dorsal ← → volar',bones:WRIST_LAT,
+ pts:{SC1:[228.2,191.2],SC2:[262.2,157.2],LU1:[186,182],LU2:[214,178]},
+ steps:[{t:'Skafoidin volar yüzündeki proksimal ve distal çıkıntılara teğet çizgiyi çizin (SC1, SC2): skafoid ekseni.',p:['SC1','SC2']},
+  {t:'Lunatumun distal dorsal (LU1) ve volar (LU2) boynuzlarını birleştirin; bu çizginin diki lunatum eksenidir.',p:['LU1','LU2']},
+  {t:'Skafoid ekseni ile lunatum ekseni arasındaki açıyı ölçün.',p:[]}],
+ calc(P){const o=G(),s=sub(P.SC2,P.SC1),h=sub(P.LU2,P.LU1),c=mid(P.LU1,P.LU2);let la=norm(perp(h));if(la[1]>0)la=mul(la,-1);
+  let sd=norm(s);if(sd[1]>0)sd=mul(sd,-1);const v=angB(la,sd),X=inter(P.SC1,s,c,la);
+  o.X(P.SC1,P.SC2,'a',0,40);o.L(P.LU1,P.LU2,'r',1);o.L(sub(c,mul(la,60)),add(c,mul(la,90)),'b',1);
+  if(X&&inView(X,-5))o.A(X,la,sd,2,f1(v)+'°',40);else{o.L(sub(c,mul(sd,40)),add(c,mul(sd,80)),'x',2);o.A(c,la,sd,2,f1(v)+'°',50)}
+  return{g:o.g,out:[{k:'Skafolunat açı',v}],main:v}},
+ judge(v){return v<30?lvl('warn','<30°: VISI paterni (lunotrikuetral yaralanma?)'):v<=60?lvl('ok','Normal'):v<=70?lvl('warn','60–70°: sınırda'):lvl('bad','>70°: DISI, skafolunat ayrışma')},
+ norm:[['30–60°','Normal (ort. ~47°)'],['>60–70°','DISI / SL bağ yaralanması'],['<30°','VISI']],
+ clin:'Karpal instabilitenin lateral grafideki temel göstergesidir. Artmış açı skafolunat bağ yırtığını ve DISI paternini düşündürür; distal radius kırıklarına eşlik eden karpal yaralanmaları gösterebilir.',
+ pit:['Gerçek lateral değilse (pisiform skafoid ile üst üste değil) açı güvenilmez.','El bileği fleksiyon/ekstansiyonda çekim: nötral pozisyon şart.','Lunatum eksenini boynuzlar yerine lunatumun dış konturuna göre çizmek.']},
+
+/* ===== OMUZ ===== */
+{id:'csa',reg:'Omuz',name:'Kritik omuz açısı (CSA)',short:'rotator manşet / OA',view:'Gerçek AP omuz (Grashey)',side:'medial ← → lateral',bones:SHOULDER,
+ pts:{G1:[196,172],G2:[184,270],A:[305,126]},
+ steps:[{t:'Glenoidin üst (G1) ve alt (G2) kenarlarını birleştirin: glenoid çizgisi.',p:['G1','G2']},
+  {t:'Glenoidin alt kenarından (G2) akromiyonun en lateral alt köşesine (A) çizgi çekin.',p:['A']},
+  {t:'İki çizgi arasındaki açı kritik omuz açısıdır.',p:[]}],
+ calc(P){const o=G(),g=sub(P.G1,P.G2),a=sub(P.A,P.G2),v=angB(g,a);
+  o.X(P.G2,P.G1,'a',0,40);o.L(P.G2,add(P.A,mul(norm(a),10)),'b',1);o.A(P.G2,g,a,2,f1(v)+'°',64);
+  return{g:o.g,out:[{k:'Kritik omuz açısı',v}],main:v}},
+ judge(v){return v<30?lvl('warn','<30°: glenohumeral osteoartrit ile ilişkili'):v<=35?lvl('ok','Normal'):lvl('warn','>35°: rotator manşet yırtığı ile ilişkili')},
+ norm:[['30–35°','Normal'],['>35°','Rotator manşet yırtığı riski'],['<30°','Glenohumeral OA ile ilişkili']],
+ clin:'Akromiyonun lateral uzanımı ve glenoid eğimini tek ölçümde birleştirir. Yüksek CSA supraspinatus üzerine kayma yükünü artırır; rotator manşet tamirinde yeniden yırtık riski ile ilişkilidir.',
+ pit:['Gerçek AP (Grashey) değil, standart AP grafide ölçmek: glenoid ön ve arka kenarları ayrışmalı, tek çizgi gibi görünmeli.','Akromiyonun lateral ucuna değil akromiyoklavikuler ekleme işaret koymak.','Skapula öne/arkaya eğikse (fleksiyon/ekstansiyon) değer güvenilmez.']},
+];
+
+/* ---------- uygulama durumu ---------- */
+const $=s=>document.querySelector(s);
+const svg=$('#xr'),bonesEl=$('#bones'),ov=$('#ov');
+const S={m:null,P:{},mode:'all',step:0,labels:true,drag:null};
+M.forEach(m=>{m.ptStep={};m.steps.forEach((s,i)=>s.p.forEach(id=>{if(!(id in m.ptStep))m.ptStep[id]=i}));Object.keys(m.pts).forEach(id=>{if(!(id in m.ptStep))m.ptStep[id]=0})});
+
+function buildList(filter=''){const f=filter.trim().toLocaleLowerCase('tr');const regs=[...new Set(M.map(m=>m.reg))];let h='';
+  for(const r of regs){const items=M.filter(m=>m.reg===r&&(!f||(m.name+' '+m.short+' '+r).toLocaleLowerCase('tr').includes(f)));if(!items.length)continue;
+    h+=`<div class="grp"><h3>${r}</h3>${items.map(m=>`<button data-id="${m.id}" aria-current="${S.m&&S.m.id===m.id}"><span>${m.name}</span><small>${m.short}</small></button>`).join('')}</div>`}
+  $('#list').innerHTML=h||'<p style="color:var(--muted);font-size:14px;margin:12px 6px">Eşleşen ölçüm yok.</p>'}
+
+function select(id){const m=M.find(x=>x.id===id)||M[0];S.m=m;S.P={};for(const k in m.pts)S.P[k]=m.pts[k].slice();S.step=0;
+  bonesEl.innerHTML=m.bones;$('#viewTag').textContent=m.view;$('#sideTag').textContent=m.side||'';
+  $('#region').textContent=m.reg;$('#name').textContent=m.name;
+  $('#chips').innerHTML=`<span class="chip">${m.view}</span><span class="chip">${m.steps.length} adım</span>`;
+  $('#norm').innerHTML=m.norm.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('');
+  $('#clin').textContent=m.clin;$('#pit').innerHTML=m.pit.map(p=>`<li>${p}</li>`).join('');
+  $('#steps').innerHTML=m.steps.map((s,i)=>`<li data-i="${i}" tabindex="0">${s.t}</li>`).join('');
+  document.querySelectorAll('#list button').forEach(b=>b.setAttribute('aria-current',b.dataset.id===m.id));
+  try{history.replaceState(null,'','#'+m.id)}catch(e){}try{localStorage.setItem('oaa-last',m.id)}catch(e){}
+  render()}
+
+function arc(c,d1,d2,r){const a1=Math.atan2(d1[1],d1[0]);let dl=Math.atan2(d2[1],d2[0])-a1;while(dl>Math.PI)dl-=2*Math.PI;while(dl<-Math.PI)dl+=2*Math.PI;
+  const p1=[c[0]+r*Math.cos(a1),c[1]+r*Math.sin(a1)],p2=[c[0]+r*Math.cos(a1+dl),c[1]+r*Math.sin(a1+dl)],am=a1+dl/2,sw=dl>0?1:0;
+  return{d:`M${P2(p1)} A${r} ${r} 0 0 ${sw} ${P2(p2)}`,w:`M${P2(c)} L${P2(p1)} A${r} ${r} 0 0 ${sw} ${P2(p2)} Z`,lp:[c[0]+(r+16)*Math.cos(am),c[1]+(r+16)*Math.sin(am)]}}
+
+function render(){const m=S.m,res=m.calc(S.P),stepMode=S.mode==='step',k=stepMode?S.step:99;let s='';
+  for(const e of res.g){if(e.s>k)continue;const cur=stepMode&&e.s===k?' cur':'';
+    if(e.t==='L')s+=`<line class="ln ${e.c}${cur}" x1="${e.a[0].toFixed(1)}" y1="${e.a[1].toFixed(1)}" x2="${e.b[0].toFixed(1)}" y2="${e.b[1].toFixed(1)}"/>`;
+    else if(e.t==='C')s+=`<circle class="circ${cur}" cx="${e.c[0].toFixed(1)}" cy="${e.c[1].toFixed(1)}" r="${e.r.toFixed(1)}"/>`;
+    else if(e.t==='A'){const a=arc(e.c,e.d1,e.d2,e.r);s+=`<path class="wedge" d="${a.w}"/><path class="arc${cur}" d="${a.d}"/>`;
+      if(e.txt){const anc=a.lp[0]<e.c[0]-4?'end':a.lp[0]>e.c[0]+4?'start':'middle';s+=`<text class="albl" x="${a.lp[0].toFixed(1)}" y="${(a.lp[1]+4).toFixed(1)}" text-anchor="${anc}">${e.txt}</text>`}}
+    else if(e.t==='T')s+=`<text class="note" x="${e.p[0].toFixed(1)}" y="${e.p[1].toFixed(1)}">${e.txt}</text>`}
+  for(const id in S.P){const st=m.ptStep[id];if(st>k)continue;const p=S.P[id],cur=stepMode&&st===k;
+    s+=`<g class="pt${cur?' cur':''}${S.drag===id?' drag':''}" data-id="${id}" transform="translate(${p[0].toFixed(1)} ${p[1].toFixed(1)})" tabindex="0" role="button" aria-label="Nokta ${id}">${cur?'<circle class="ring" r="6"/>':''}<circle class="hit" r="15"/><circle class="dot" r="5.5"/>${S.labels?`<text class="lbl" x="8" y="-8">${id}</text>`:''}</g>`}
+  ov.innerHTML=s;
+  // panel
+  $('#vals').innerHTML=res.out.map(o=>`<div class="val"><span class="k">${o.k}</span><span class="v">${f1(o.v)}°${o.sub?`<small>${o.sub}</small>`:''}</span></div>`).join('');
+  const j=m.judge(res.main,res.out,res);$('#status').innerHTML=`<div class="status ${j.l}"><b>${j.l==='ok'?'Normal':j.l==='warn'?'Dikkat':'Anormal'}</b><span>${j.t}</span></div>`;
+  document.querySelectorAll('#steps li').forEach((li,i)=>{li.classList.toggle('on',stepMode&&i===S.step);li.classList.toggle('past',stepMode&&i<S.step)});
+  $('#mStep').setAttribute('aria-pressed',stepMode);$('#mAll').setAttribute('aria-pressed',!stepMode);
+  $('#stepLbl').textContent=stepMode?`${S.step+1} / ${m.steps.length}`:'tümü';
+  $('#prev').disabled=stepMode&&S.step===0;$('#next').disabled=stepMode&&S.step===m.steps.length-1}
+
+/* ---------- etkileşim ---------- */
+function toSvg(e){const pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const q=pt.matrixTransform(svg.getScreenCTM().inverse());return[Math.max(0,Math.min(W,q.x)),Math.max(0,Math.min(H,q.y))]}
+svg.addEventListener('pointerdown',e=>{const g=e.target.closest('.pt');if(!g)return;S.drag=g.dataset.id;svg.setPointerCapture(e.pointerId);e.preventDefault();render()});
+svg.addEventListener('pointermove',e=>{if(!S.drag)return;S.P[S.drag]=toSvg(e);render()});
+const end=()=>{if(S.drag){S.drag=null;render()}};svg.addEventListener('pointerup',end);svg.addEventListener('pointercancel',end);
+svg.addEventListener('keydown',e=>{const g=e.target.closest&&e.target.closest('.pt');if(!g)return;const d={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key];if(!d)return;e.preventDefault();
+  const id=g.dataset.id,st=e.shiftKey?5:1;S.P[id]=add(S.P[id],mul(d,st));render();const ng=ov.querySelector(`.pt[data-id="${id}"]`);ng&&ng.focus()});
+$('#list').addEventListener('click',e=>{const b=e.target.closest('button');if(b)select(b.dataset.id)});
+$('#q').addEventListener('input',e=>buildList(e.target.value));
+$('#mStep').onclick=()=>{S.mode='step';render()};$('#mAll').onclick=()=>{S.mode='all';render()};
+$('#prev').onclick=()=>{if(S.mode!=='step'){S.mode='step';S.step=0}else S.step=Math.max(0,S.step-1);render()};
+$('#next').onclick=()=>{if(S.mode!=='step'){S.mode='step';S.step=0}else S.step=Math.min(S.m.steps.length-1,S.step+1);render()};
+$('#steps').addEventListener('click',e=>{const li=e.target.closest('li');if(!li)return;S.mode='step';S.step=+li.dataset.i;render()});
+$('#steps').addEventListener('keydown',e=>{if(e.key==='Enter'){const li=e.target.closest('li');if(li){S.mode='step';S.step=+li.dataset.i;render()}}});
+$('#reset').onclick=()=>{for(const k in S.m.pts)S.P[k]=S.m.pts[k].slice();render()};
+$('#lblTog').onclick=e=>{S.labels=!S.labels;e.currentTarget.setAttribute('aria-pressed',S.labels);render()};
+
+let start=(location.hash||'').slice(1);if(!M.some(m=>m.id===start)){try{start=localStorage.getItem('oaa-last')||''}catch(e){start=''}}
+$('#cnt').textContent=M.length;buildList();select(M.some(m=>m.id===start)?start:'cobb');
+})();
+</script>
+<script>
+if('serviceWorker' in navigator&&location.protocol.startsWith('http'))addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script>
+</body>
+</html>

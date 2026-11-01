@@ -1,0 +1,15 @@
+{
+  "name": "Ortopedik Açı Atlası",
+  "short_name": "Açı Atlası",
+  "description": "Grafi üzerinde ortopedik açıların adım adım interaktif ölçüm rehberi.",
+  "lang": "tr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0c1016",
+  "theme_color": "#0a6c8f",
+  "icons": [
+    {"src": "favicon.svg", "sizes": "any", "type": "image/svg+xml"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+  ]
+}
