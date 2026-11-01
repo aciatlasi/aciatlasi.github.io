@@ -1,5 +1,7 @@
 # Ortopedik Açı Atlası
 
+**Canlı site:** https://mahmutbiyikli.github.io/ortopedi-aci-atlasi/
+
 Grafi üzerinde 31 ortopedik açının doğru ölçüm tekniğini adım adım gösteren, sürüklenebilir noktalı interaktif rehber.
 
 Statik bir sitedir: derleme adımı, sunucu kodu veya veritabanı yoktur. Klasördeki dosyalar olduğu gibi herhangi bir statik barındırma servisine yüklenebilir.
